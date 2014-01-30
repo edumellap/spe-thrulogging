@@ -1,2 +1,3 @@
-spe-thrulogging (System Performance Evaluation Through the Logging System)
+spe-thrulogging
+(System Performance Evaluation Through the Logging System)
 ===============
