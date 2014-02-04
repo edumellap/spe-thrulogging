@@ -15,7 +15,7 @@ public class Grafico extends ApplicationFrame {
   super(title);
 
   final CategoryDataset dataset = DatasetUtilities.createCategoryDataset(Bars, Timestamp, data);
-  final JFreeChart chart = createChart(dataset);
+  final JFreeChart chart = createChart(dataset,title);
   final ChartPanel chartPanel = new ChartPanel(chart);
   
   
@@ -29,10 +29,10 @@ public class Grafico extends ApplicationFrame {
 
  
 
-  private JFreeChart createChart(final CategoryDataset dataset) {
+  private JFreeChart createChart(final CategoryDataset dataset, String title) {
 
   final JFreeChart chart = ChartFactory.createBarChart(
-  "Bar Chart","Hours", "MBytes", dataset,
+  title,"Hours", "MBytes", dataset,
   PlotOrientation.VERTICAL, true, true, false);
   
   

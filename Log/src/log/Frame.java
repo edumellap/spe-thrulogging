@@ -9,8 +9,20 @@
  * Created on 31-Jan-2014, 09:46:58
  */
 package log;
+import java.awt.Color;
+import java.awt.Font;
+import java.io.BufferedReader;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
+import java.io.IOException;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Date;
 import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import org.jfree.ui.RefineryUtilities;
 /**
  *
@@ -18,62 +30,64 @@ import org.jfree.ui.RefineryUtilities;
  */
 public class Frame extends javax.swing.JFrame {
 
+    String currentDate;
     /** Creates new form Frame */
     public Frame() {
         initComponents();
-        int parameter = 24;
-          List<String> finalresult = new ArrayList<String>();
-        finalresult.add("2014-01-06T00#323.90988");
- finalresult.add("2014-01-06T01#229.06938");
- finalresult.add("2014-01-06T02#740.6015");
- finalresult.add("2014-01-06T03#8383.697");
- finalresult.add("2014-01-06T04#8998.523");
- finalresult.add("2014-01-06T05#4822.339");
- finalresult.add("2014-01-06T06#3153.6895");
- finalresult.add("2014-01-06T07#0");
- finalresult.add("2014-01-06T08#0");
- finalresult.add("2014-01-06T09#708.0818");
- finalresult.add("2014-01-06T10#984.643");
- finalresult.add("2014-01-06T11#1032.6699");
- finalresult.add("2014-01-06T12#0");
- finalresult.add("2014-01-06T13#0.002754");
- finalresult.add("2014-01-06T14#0.008262");
- finalresult.add("2014-01-06T15#0.011318");
- finalresult.add("2014-01-06T16#0");
- finalresult.add("2014-01-06T17#3.886679");
- finalresult.add("2014-01-06T18#3.883925");
- finalresult.add("2014-01-06T19#0");
- finalresult.add("2014-01-06T20#0.021995");
- finalresult.add("2014-01-06T21#931.83215");
- finalresult.add("2014-01-06T22#54.01544");  
- finalresult.add("2014-01-06T23#376.354");
         
-        
-         String T[] = new String[parameter];
- String S[] = {finalresult.get(0).substring(0, 10)};
- double data[][] = new double[1][parameter];
- double amount[] = new double[parameter];
- double amount2[] = new double[parameter];
- 
- 
- for(int i=0;i<parameter;i++){
-   
-     T[i] = finalresult.get(i).substring(10, 13);
-     amount[i] = Double.parseDouble(finalresult.get(i).substring(14));
-     //amount[i] = Double.parseDouble(finalresult2.get(i).substring(14));
-     data[0][i] = amount[i];
 
- }
+    }
+    
+    public void setGraph(List<String> finalresult) throws ParseException{
+        
+        String T[] = new String[finalresult.size()];
+        String S[] = {finalresult.get(0).substring(0, 10)};
+        double data[][] = new double[1][finalresult.size()];
+        double amount[] = new double[finalresult.size()];
+
+ 
+ 
+         for(int i=0;i<finalresult.size();i++){
+   
+              T[i] = finalresult.get(i).substring(10, 13);
+              amount[i] = Double.parseDouble(finalresult.get(i).substring(14));
+              //amount[i] = Double.parseDouble(finalresult2.get(i).substring(14));
+              data[0][i] = amount[i];
+
+         }
         
         final Grafico chart = new Grafico("Vertical Bar Chart", T, S, data);
-          chart.pack();
+        chart.pack();
   
         RefineryUtilities.centerFrameOnScreen(chart);
          
      jPanel1.add(chart.getContentPane());
+     
+     
+     
+     currentDate = S[0];
+     String nextDay, dayBefore;
+     
+     SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
+     Calendar c = Calendar.getInstance();
+     c.setTime(sdf.parse(currentDate));
     
+     c.add(Calendar.DATE, 1);  // number of days to add
+     nextDay = sdf.format(c.getTime());  // dt is now the new date
+    
+     c.add(Calendar.DATE, -2);  // number of days to add
+     dayBefore = sdf.format(c.getTime());  // dt is now the new date
+     
+     jLabel1.setFont(new Font("Verdana", Font.BOLD, 16));
+     jLabel1.setText(currentDate);
+     jLabel1.setForeground(Color.blue);
+     
+     jCheckBox1.setText(dayBefore);
+     jCheckBox2.setText(currentDate);
+     jCheckBox3.setText(nextDay);
+    
+     
     }
-
     /** This method is called from within the constructor to
      * initialize the form.
      * WARNING: Do NOT modify this code. The content of this method is
@@ -85,28 +99,71 @@ public class Frame extends javax.swing.JFrame {
 
         jPanel1 = new javax.swing.JPanel();
         jButton1 = new javax.swing.JButton();
+        jButton2 = new javax.swing.JButton();
+        jLabel1 = new javax.swing.JLabel();
+        jCheckBox1 = new javax.swing.JCheckBox();
+        jCheckBox2 = new javax.swing.JCheckBox();
+        jCheckBox3 = new javax.swing.JCheckBox();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
 
         jPanel1.setPreferredSize(new java.awt.Dimension(1200, 540));
 
-        jButton1.setText("jButton1");
+        jButton1.setText("Next");
+        jButton1.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jButton1ActionPerformed(evt);
+            }
+        });
+
+        jButton2.setText("Before");
+        jButton2.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jButton2ActionPerformed(evt);
+            }
+        });
+
+        jCheckBox1.setText("jCheckBox1");
+
+        jCheckBox2.setText("jCheckBox2");
+
+        jCheckBox3.setText("jCheckBox3");
 
         javax.swing.GroupLayout jPanel1Layout = new javax.swing.GroupLayout(jPanel1);
         jPanel1.setLayout(jPanel1Layout);
         jPanel1Layout.setHorizontalGroup(
             jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel1Layout.createSequentialGroup()
-                .addContainerGap(206, Short.MAX_VALUE)
-                .addComponent(jButton1)
-                .addGap(100, 100, 100))
+            .addGroup(jPanel1Layout.createSequentialGroup()
+                .addContainerGap(221, Short.MAX_VALUE)
+                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel1Layout.createSequentialGroup()
+                        .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING, false)
+                            .addComponent(jButton1, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                            .addComponent(jButton2, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                            .addComponent(jCheckBox1, javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(jCheckBox2, javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(jCheckBox3, javax.swing.GroupLayout.Alignment.LEADING))
+                        .addGap(61, 61, 61))
+                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel1Layout.createSequentialGroup()
+                        .addComponent(jLabel1, javax.swing.GroupLayout.PREFERRED_SIZE, 113, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addGap(66, 66, 66))))
         );
         jPanel1Layout.setVerticalGroup(
             jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(jPanel1Layout.createSequentialGroup()
-                .addGap(95, 95, 95)
+                .addGap(34, 34, 34)
+                .addComponent(jLabel1, javax.swing.GroupLayout.PREFERRED_SIZE, 21, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(jButton1)
-                .addContainerGap(180, Short.MAX_VALUE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addComponent(jButton2)
+                .addGap(46, 46, 46)
+                .addComponent(jCheckBox1)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addComponent(jCheckBox2)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addComponent(jCheckBox3)
+                .addContainerGap(54, Short.MAX_VALUE))
         );
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
@@ -122,6 +179,93 @@ public class Frame extends javax.swing.JFrame {
 
         pack();
     }// </editor-fold>//GEN-END:initComponents
+
+private void jButton1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton1ActionPerformed
+// TODO add your handling code here:
+    
+    String date = currentDate;
+    
+     SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
+     Calendar c = Calendar.getInstance();
+        try {
+            c.setTime(sdf.parse(date));
+        } catch (ParseException ex) {
+            Logger.getLogger(Frame.class.getName()).log(Level.SEVERE, null, ex);
+        }
+    
+     c.add(Calendar.DATE, 1);  // number of days to add
+     date = sdf.format(c.getTime());  // dt is now the new date
+    
+    List<String> finalresult = new ArrayList<String>();
+ 
+     BufferedReader reader2 = null;
+        try {
+            reader2 = new BufferedReader(new FileReader("/media/Respaldo/log/data/"+date+".txt"));
+        } catch (FileNotFoundException ex) {
+            Logger.getLogger(Frame.class.getName()).log(Level.SEVERE, null, ex);
+        }
+     String linea;
+        try {
+            while (  (linea = reader2.readLine()) != null) {
+            finalresult.add(linea);
+        }
+        } catch (IOException ex) {
+            Logger.getLogger(Frame.class.getName()).log(Level.SEVERE, null, ex);
+        }
+            
+     this.jPanel1.remove(6); //remove the chart
+     this.dispose();
+        try {
+            this.setGraph(finalresult);
+        } catch (ParseException ex) {
+            Logger.getLogger(Frame.class.getName()).log(Level.SEVERE, null, ex);
+        }
+     this.setVisible(true);
+    
+}//GEN-LAST:event_jButton1ActionPerformed
+
+private void jButton2ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton2ActionPerformed
+// TODO add your handling code here:
+    String date = currentDate;
+    
+     SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
+     Calendar c = Calendar.getInstance();
+        try {
+            c.setTime(sdf.parse(date));
+        } catch (ParseException ex) {
+            Logger.getLogger(Frame.class.getName()).log(Level.SEVERE, null, ex);
+        }
+    
+     c.add(Calendar.DATE, -1);  // number of days to add
+     date = sdf.format(c.getTime());  // dt is now the new date
+    
+    List<String> finalresult = new ArrayList<String>();
+ 
+     BufferedReader reader2 = null;
+        try {
+            reader2 = new BufferedReader(new FileReader("/media/Respaldo/log/data/"+date+".txt"));
+        } catch (FileNotFoundException ex) {
+            Logger.getLogger(Frame.class.getName()).log(Level.SEVERE, null, ex);
+        }
+     String linea;
+        try {
+            while (  (linea = reader2.readLine()) != null) {
+            finalresult.add(linea);
+        }
+        } catch (IOException ex) {
+            Logger.getLogger(Frame.class.getName()).log(Level.SEVERE, null, ex);
+        }
+            
+     this.jPanel1.remove(6); //remove the chart
+     this.dispose();
+        try {
+            this.setGraph(finalresult);
+        } catch (ParseException ex) {
+            Logger.getLogger(Frame.class.getName()).log(Level.SEVERE, null, ex);
+        }
+     this.setVisible(true);
+    
+}//GEN-LAST:event_jButton2ActionPerformed
 
     /**
      * @param args the command line arguments
@@ -161,12 +305,17 @@ public class Frame extends javax.swing.JFrame {
             @Override
             public void run() {
                 
-                new Frame().setVisible(true);
+                
             }
         });
     }
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton jButton1;
+    private javax.swing.JButton jButton2;
+    private javax.swing.JCheckBox jCheckBox1;
+    private javax.swing.JCheckBox jCheckBox2;
+    private javax.swing.JCheckBox jCheckBox3;
+    private javax.swing.JLabel jLabel1;
     private javax.swing.JPanel jPanel1;
     // End of variables declaration//GEN-END:variables
 }
