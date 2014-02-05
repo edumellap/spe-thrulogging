@@ -22,7 +22,11 @@ import java.util.Calendar;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import org.jfree.chart.annotations.CategoryTextAnnotation;
+import org.jfree.chart.axis.CategoryAnchor;
+import org.jfree.chart.plot.CategoryPlot;
 import org.jfree.ui.RefineryUtilities;
+import org.jfree.ui.TextAnchor;
 /**
  *
  * @author striker
@@ -30,6 +34,7 @@ import org.jfree.ui.RefineryUtilities;
 public class Frame extends javax.swing.JFrame {
 
     String currentDate;
+    Grafico g;
     /** Creates new form Frame */
     public Frame() {
         initComponents();
@@ -64,7 +69,7 @@ public class Frame extends javax.swing.JFrame {
         }
         //This is something temporal, just adding the needed data to the List    
         
-        this.jPanel1.remove(6); //remove the chart. The number can change, it depends of the components of the panel
+        this.jPanel1.remove(7); //remove the chart. The number can change, it depends of the components of the panel
         this.dispose(); //totally delete the frame
         
          try {
@@ -118,7 +123,7 @@ public class Frame extends javax.swing.JFrame {
             Logger.getLogger(Frame.class.getName()).log(Level.SEVERE, null, ex);
         }
             
-     this.jPanel1.remove(6); //remove the chart
+     this.jPanel1.remove(7); //remove the chart
      this.dispose();
         try {
             this.setGraph(finalresult, finalresult2);
@@ -182,9 +187,8 @@ public class Frame extends javax.swing.JFrame {
      c.add(Calendar.DATE, -2);  // number of days to add
      dayBefore = sdf.format(c.getTime());  // dt is now the new date
      
-     jLabel1.setFont(new Font("Verdana", Font.BOLD, 16));
-     jLabel1.setText(currentDate);
-     jLabel1.setForeground(Color.blue);
+     
+     g.getChart().setTitle(currentDate);
      
      jRadioButton1.setText(dayBefore);
 
@@ -215,6 +219,9 @@ public class Frame extends javax.swing.JFrame {
          }
         
         final Grafico chart = new Grafico("Vertical Bar Chart", T, S, data);
+        g = chart;
+      
+        
         chart.pack();
   
         RefineryUtilities.centerFrameOnScreen(chart);
@@ -249,6 +256,8 @@ public class Frame extends javax.swing.JFrame {
          }
         
         final Grafico chart = new Grafico("Vertical Bar Chart", T, S, data);
+       g = chart;
+        
         chart.pack();
   
         RefineryUtilities.centerFrameOnScreen(chart);
@@ -261,6 +270,87 @@ public class Frame extends javax.swing.JFrame {
      
     
      
+    }
+    
+    
+    private void setArrow(String i, String e, String u, String o){
+        String arrow = "";
+        
+        int ihour = Integer.parseInt(i.substring(11, 13)); //initial hour
+        int ehour = Integer.parseInt(e.substring(11, 13)); //ended hour
+        int imin = Integer.parseInt(i.substring(14, 16)); //initial minute
+        int emin = Integer.parseInt(e.substring(14, 16)); //ended minute
+        
+        int start = imin/5; //to position the started point in the chart
+        
+        int duration = ((ehour-ihour)*60)+(emin-imin); //duration of data transfer
+        
+        
+        for(int j=0; j<start; j++){
+            arrow = arrow+" ";
+        } //start position finished
+        
+        
+        String uid = arrow;
+        String obs = arrow;
+        
+        int x = (duration-1)/5;
+        String gap="";
+        
+        if(x>=2){
+            if(x%2 == 0){
+                gap = arrow+"\u2501";
+                arrow = arrow+" ";
+                
+            }
+            else if(x%2 != 0){
+                x = x+1;
+            }
+            if(x>3){
+                x=x/2; //numero de lineas
+                for(int k=0;k<x;k++){
+                    arrow=arrow+"\u2501";
+                }
+            }
+            
+        }
+        
+        
+        arrow = arrow+"\u2501\u25BA";
+        
+        uid = uid+u;
+        obs=obs+o;
+        
+        
+         final CategoryPlot plot = g.getChart().getCategoryPlot();
+         
+         final CategoryTextAnnotation ca = new CategoryTextAnnotation(arrow,"T03",1000);
+         ca.setFont(new Font("f", Font.PLAIN, 10));
+         ca.setTextAnchor(TextAnchor.CENTER_LEFT);
+         ca.setCategoryAnchor(CategoryAnchor.START); 
+         
+         final CategoryTextAnnotation ca2 = new CategoryTextAnnotation(gap,"T03",1000);
+         ca2.setFont(new Font("f", Font.PLAIN, 10));
+         ca2.setTextAnchor(TextAnchor.CENTER_LEFT);
+         ca2.setCategoryAnchor(CategoryAnchor.START); 
+         
+         final CategoryTextAnnotation ca3 = new CategoryTextAnnotation(uid,"T03",1400);
+         ca3.setFont(new Font("f", Font.PLAIN, 12));
+         ca3.setTextAnchor(TextAnchor.CENTER_LEFT);
+         ca3.setCategoryAnchor(CategoryAnchor.START);
+         
+         
+         final CategoryTextAnnotation ca4 = new CategoryTextAnnotation(obs,"T03",1900);
+         ca4.setFont(new Font("f", Font.PLAIN, 12));
+         ca4.setTextAnchor(TextAnchor.CENTER_LEFT);
+         ca4.setCategoryAnchor(CategoryAnchor.START);
+         
+         plot.addAnnotation(ca);
+         plot.addAnnotation(ca2);
+         plot.addAnnotation(ca3);
+         plot.addAnnotation(ca4);
+       
+      
     }
     
     /** This method is called from within the constructor to
@@ -280,6 +370,7 @@ public class Frame extends javax.swing.JFrame {
         jButton3 = new javax.swing.JButton();
         jRadioButton1 = new javax.swing.JRadioButton();
         jRadioButton2 = new javax.swing.JRadioButton();
+        jButton4 = new javax.swing.JButton();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
 
@@ -310,55 +401,63 @@ public class Frame extends javax.swing.JFrame {
 
         jRadioButton2.setText("jRadioButton2");
 
+        jButton4.setText("Observation");
+        jButton4.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jButton4ActionPerformed(evt);
+            }
+        });
+
         javax.swing.GroupLayout jPanel1Layout = new javax.swing.GroupLayout(jPanel1);
         jPanel1.setLayout(jPanel1Layout);
         jPanel1Layout.setHorizontalGroup(
             jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(jPanel1Layout.createSequentialGroup()
-                .addContainerGap(211, Short.MAX_VALUE)
-                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                    .addComponent(jLabel1, javax.swing.GroupLayout.PREFERRED_SIZE, 113, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING, false)
-                        .addComponent(jButton1, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                        .addComponent(jButton2, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                        .addComponent(jRadioButton1, javax.swing.GroupLayout.Alignment.LEADING)
-                        .addComponent(jRadioButton2, javax.swing.GroupLayout.Alignment.LEADING)
-                        .addGroup(javax.swing.GroupLayout.Alignment.LEADING, jPanel1Layout.createSequentialGroup()
-                            .addGap(21, 21, 21)
-                            .addComponent(jButton3))))
-                .addGap(52, 52, 52))
+            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel1Layout.createSequentialGroup()
+                .addContainerGap(523, Short.MAX_VALUE)
+                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(jPanel1Layout.createSequentialGroup()
+                        .addGap(21, 21, 21)
+                        .addComponent(jButton3))
+                    .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                        .addComponent(jLabel1, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, 113, Short.MAX_VALUE)
+                        .addComponent(jRadioButton1, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addComponent(jButton1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addComponent(jButton2, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addComponent(jRadioButton2, javax.swing.GroupLayout.PREFERRED_SIZE, 125, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addComponent(jButton4, javax.swing.GroupLayout.Alignment.TRAILING)))
+                .addGap(21, 21, 21))
         );
         jPanel1Layout.setVerticalGroup(
             jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(jPanel1Layout.createSequentialGroup()
-                .addGap(28, 28, 28)
+                .addContainerGap()
                 .addComponent(jLabel1, javax.swing.GroupLayout.PREFERRED_SIZE, 21, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addGap(18, 18, 18)
                 .addComponent(jButton1)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(jButton2)
-                .addGap(52, 52, 52)
+                .addGap(39, 39, 39)
                 .addComponent(jRadioButton1)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addGap(6, 6, 6)
                 .addComponent(jRadioButton2)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addComponent(jButton3)
-                .addContainerGap(33, Short.MAX_VALUE))
+                .addGap(27, 27, 27)
+                .addComponent(jButton4)
+                .addContainerGap(90, Short.MAX_VALUE))
         );
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                .addGap(24, 24, 24)
-                .addComponent(jPanel1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+            .addGroup(layout.createSequentialGroup()
+                .addComponent(jPanel1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addContainerGap(41, Short.MAX_VALUE))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(layout.createSequentialGroup()
-                .addComponent(jPanel1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                .addContainerGap())
+            .addComponent(jPanel1, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
         );
 
         pack();
@@ -393,6 +492,13 @@ private void jButton3ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRS
     
     
 }//GEN-LAST:event_jButton3ActionPerformed
+
+private void jButton4ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton4ActionPerformed
+// TODO add your handling code here:
+
+        setArrow("2014-01-27T03:26:00", "2014-01-27T05:02:43","uid://A002/X799cfd/X20e","SBEX"); 
+
+}//GEN-LAST:event_jButton4ActionPerformed
 
     /**
      * @param args the command line arguments
@@ -441,6 +547,7 @@ private void jButton3ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRS
     private javax.swing.JButton jButton1;
     private javax.swing.JButton jButton2;
     private javax.swing.JButton jButton3;
+    private javax.swing.JButton jButton4;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JPanel jPanel1;
     private javax.swing.JRadioButton jRadioButton1;

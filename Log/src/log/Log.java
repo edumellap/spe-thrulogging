@@ -247,9 +247,16 @@ public class Log {
  f.setGraph(finalresult);
  f.setVisible(true);//Plot the data
  
-// List<String> obs = l.getObservationTime("/media/Respaldo/log/", "2014-01-06");
  
  
+ /*
+ List<String> obs = l.getObservationTime("/media/Respaldo/log/", "2014-01-27");
+ 
+ for(int i=0;i<obs.size();i++){
+     System.out.println(obs.get(i));
+ }
+ 
+ */
        
   
   long endTime   = System.currentTimeMillis();
