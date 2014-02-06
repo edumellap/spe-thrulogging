@@ -11,7 +11,6 @@
 package log;
 import java.awt.Color;
 import java.awt.Font;
-import java.awt.MenuItem;
 import java.io.BufferedReader;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
@@ -23,8 +22,6 @@ import java.util.Calendar;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import javax.swing.JCheckBox;
-import javax.swing.JCheckBoxMenuItem;
 import org.jfree.chart.annotations.CategoryTextAnnotation;
 import org.jfree.chart.axis.CategoryAnchor;
 import org.jfree.chart.plot.CategoryPlot;
@@ -36,18 +33,18 @@ import org.jfree.ui.TextAnchor;
  */
 public class Frame extends javax.swing.JFrame {
 
-    String currentDate;
-    Grafico g;
-    int arrows[][]= {{0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
-                   {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
-                   {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
-                   {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
-                   {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
-                   {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
-                   {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
-                   {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
-                   {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
-                   {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0}};
+    String currentDate; //the date that is being shown in the chart
+    GChart g; //the current GChart inside the panel
+    int arrows[][]= {{0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0}, //this array allows to plot the arrows in the chart 
+                     {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0}, //without overlapping them
+                     {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0}, 
+                     {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0}, //In the current design of the chart, 10 arrows can
+                     {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0}, //be deployed in the Y-axis, so every row of the array
+                     {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0}, //indicates the position in the chart
+                     {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0}, //if a row has value 1, so an arrow is already 
+                     {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0}, //deployed in that particular position
+                     {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
+                     {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0}};
     
     /** Creates new form Frame */
     public Frame() {
@@ -62,12 +59,15 @@ public class Frame extends javax.swing.JFrame {
         List<String> finalresult = new ArrayList<String>(); 
         
         
-        //This is something tempora, should be replaced by an elasticsearch query to get the data or, if it took to long, by a buffer
+        //This is something temporal, should be replaced by an elasticsearch query to get the data or, if it took to long, by a buffer
         //read of the final data
         BufferedReader reader2 = null;
        
         try {
+            
             reader2 = new BufferedReader(new FileReader("/media/Respaldo/log/data/"+date+".txt"));
+            
+            
         } catch (FileNotFoundException ex) {
             Logger.getLogger(Frame.class.getName()).log(Level.SEVERE, null, ex);
         }
@@ -75,25 +75,34 @@ public class Frame extends javax.swing.JFrame {
         String linea;
         
         try {
+            
+            
             while (  (linea = reader2.readLine()) != null) {
             finalresult.add(linea);
         }                        
+            
+            
         } catch (IOException ex) {
             Logger.getLogger(Frame.class.getName()).log(Level.SEVERE, null, ex);
         }
         //This is something temporal, just adding the needed data to the List    
         
         this.jPanel1.remove(9); //remove the chart. The number can change, it depends of the components of the panel
-        this.jPanel1.repaint();
+        
         
          try {
+             
+             
              this.setGraph(finalresult); //set a new graph to the panel with the new data of the selected date
              
-        } catch (ParseException ex) {
+        }
+         
+         
+         catch (ParseException ex) {
             Logger.getLogger(Frame.class.getName()).log(Level.SEVERE, null, ex);
         }
          
-       
+       this.jPanel1.repaint(); //reapint the panel
     
     }
     
@@ -107,46 +116,80 @@ public class Frame extends javax.swing.JFrame {
         List<String> finalresult2 = new ArrayList<String>();
  
      BufferedReader reader2 = null;
+     
         try {
+            
+            
             reader2 = new BufferedReader(new FileReader("/media/Respaldo/log/data/"+date+".txt"));
-        } catch (FileNotFoundException ex) {
+        } 
+        
+        
+        catch (FileNotFoundException ex) {
             Logger.getLogger(Frame.class.getName()).log(Level.SEVERE, null, ex);
         }
+        
+        
      String linea;
+     
+     
         try {
+            
+            
             while (  (linea = reader2.readLine()) != null) {
             finalresult.add(linea);
         }
+            
+            
         } catch (IOException ex) {
             Logger.getLogger(Frame.class.getName()).log(Level.SEVERE, null, ex);
         }
         
         
         BufferedReader reader3 = null;
+        
         try {
+            
+            
             reader3 = new BufferedReader(new FileReader("/media/Respaldo/log/data/"+date2+".txt"));
-        } catch (FileNotFoundException ex) {
+        } 
+        
+        
+        catch (FileNotFoundException ex) {
             Logger.getLogger(Frame.class.getName()).log(Level.SEVERE, null, ex);
         }
+        
+        
      String linea2;
+     
+     
         try {
+           
+            
             while (  (linea2 = reader3.readLine()) != null) {
             finalresult2.add(linea2);
         }
+            
+            
+            
         } catch (IOException ex) {
             Logger.getLogger(Frame.class.getName()).log(Level.SEVERE, null, ex);
         }
             
      this.jPanel1.remove(9); //remove the chart
-     this.jPanel1.repaint();
+     
    
         try {
+            
+            
             this.setGraph(finalresult, finalresult2);
-        } catch (ParseException ex) {
+        } 
+        
+        
+        catch (ParseException ex) {
             Logger.getLogger(Frame.class.getName()).log(Level.SEVERE, null, ex);
         }
    
-    
+    this.jPanel1.repaint();
     }
     
     
@@ -156,8 +199,12 @@ public class Frame extends javax.swing.JFrame {
         SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
         Calendar c = Calendar.getInstance();
         try {
+                      
             c.setTime(sdf.parse(date));
-        } catch (ParseException ex) {
+        } 
+        
+        
+        catch (ParseException ex) {
             Logger.getLogger(Frame.class.getName()).log(Level.SEVERE, null, ex);
         }
     
@@ -187,26 +234,15 @@ public class Frame extends javax.swing.JFrame {
     
     //a method to set the button into the panel
     //this method should be called every time a new frame is initialized
-    private void setButton(String date[], int obser) throws ParseException, FileNotFoundException, IOException{
-        if(obser == 1){
-            
-            choice1.removeAll();
+    private void setButton(String date[]) throws ParseException, FileNotFoundException, IOException{
+       
+         
+     choice1.removeAll(); //to clean the observation list
      currentDate = date[0];
-     String nextDay, dayBefore;
+     String nextDay=this.getNextday(currentDate), dayBefore=this.getDaybefore(currentDate);
      
-     SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
-     Calendar c = Calendar.getInstance();
-     c.setTime(sdf.parse(currentDate));
-    
-     c.add(Calendar.DATE, 1);  // number of days to add
-     nextDay = sdf.format(c.getTime());  // dt is now the new date
-    
-     c.add(Calendar.DATE, -2);  // number of days to add
-     dayBefore = sdf.format(c.getTime());  // dt is now the new date
-     
-     
-     g.getChart().setTitle(currentDate);
-     
+     jButton2.setFont(new Font("",Font.BOLD, 11));
+     jButton1.setFont(new Font("",Font.BOLD, 11));
      jRadioButton1.setText(dayBefore);
 
      jRadioButton2.setText(nextDay);
@@ -224,12 +260,13 @@ public class Frame extends javax.swing.JFrame {
   
     
      
-    }
+    
         
-        
+        g.getChart().setTitle(currentDate);
         jPanel1.setBackground(new Color(204,204,255));
         this.setBackground(new Color(204,204,255));
         this.setResizable(false);
+        this.setTitle("Bulk System's Data Transfer Rate Analysis");
         
     }
     
@@ -255,7 +292,7 @@ public class Frame extends javax.swing.JFrame {
 
          }
         
-        final Grafico chart = new Grafico("Vertical Bar Chart", T, S, data);
+        final GChart chart = new GChart("Bulk System Analisys", T, S, data);
         g = chart;
       
         
@@ -266,7 +303,7 @@ public class Frame extends javax.swing.JFrame {
      jPanel1.add(chart.getContentPane());
      
      
-     this.setButton(S, 1);
+     this.setButton(S);
      jButton5.doClick();
      
     
@@ -295,7 +332,7 @@ public class Frame extends javax.swing.JFrame {
 
          }
         
-        final Grafico chart = new Grafico("Vertical Bar Chart", T, S, data);
+        final GChart chart = new GChart("Bulk System Analisys", T, S, data);
        g = chart;
         
         chart.pack();
@@ -306,7 +343,7 @@ public class Frame extends javax.swing.JFrame {
      
      
      
-     this.setButton(S, 0);
+     this.setButton(S);
      jButton5.doClick();
      
     
@@ -482,7 +519,7 @@ public class Frame extends javax.swing.JFrame {
             }
         });
 
-        jButton2.setText("Day Before");
+        jButton2.setText("Previous Day");
         jButton2.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 jButton2ActionPerformed(evt);
@@ -539,7 +576,7 @@ public class Frame extends javax.swing.JFrame {
                             .addComponent(jRadioButton2, javax.swing.GroupLayout.Alignment.LEADING, 0, 0, Short.MAX_VALUE)
                             .addComponent(jRadioButton1, javax.swing.GroupLayout.Alignment.LEADING, 0, 0, Short.MAX_VALUE)
                             .addComponent(jButton1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                            .addComponent(jButton2, javax.swing.GroupLayout.DEFAULT_SIZE, 122, Short.MAX_VALUE)
+                            .addComponent(jButton2, javax.swing.GroupLayout.PREFERRED_SIZE, 122, Short.MAX_VALUE)
                             .addComponent(jButton4, javax.swing.GroupLayout.Alignment.LEADING))
                         .addGap(26, 26, 26))
                     .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel1Layout.createSequentialGroup()
