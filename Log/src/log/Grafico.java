@@ -1,6 +1,11 @@
 package log;
 
 import java.awt.Color;
+import java.awt.Font;
+import java.awt.Image;
+import java.io.File;
+import java.io.IOException;
+import javax.imageio.ImageIO;
 import org.jfree.chart.ChartFactory;
 import org.jfree.chart.ChartPanel;
 import org.jfree.chart.JFreeChart;
@@ -29,7 +34,7 @@ public class Grafico extends ApplicationFrame {
     
     private JFreeChart ch;
 
-  public Grafico(String title, String Timestamp[], String Bars[], double[][] data) {
+  public Grafico(String title, String Timestamp[], String Bars[], double[][] data) throws IOException {
   super(title);
 
   final CategoryDataset dataset = DatasetUtilities.createCategoryDataset(Bars, Timestamp, data);
@@ -37,17 +42,33 @@ public class Grafico extends ApplicationFrame {
   final JFreeChart chart = createChart(dataset,title);
   
   ch = chart;
-  chart.setBackgroundPaint(Color.white);
+  //chart.setBackgroundPaint(new Color(204,204,255));
+  
+  
   
    final CategoryPlot plot = chart.getCategoryPlot();
     
    //to set the margins
    CategoryAxis axis = plot.getDomainAxis();
    axis.setLowerMargin(0.03);
-   axis.setUpperMargin(0.03);
+   axis.setUpperMargin(0.13);
    axis.setCategoryMargin(0.0);
    BarRenderer renderer = (BarRenderer) plot.getRenderer();
    renderer.setItemMargin(0.0);
+   axis.setTickLabelFont(new Font("",Font.BOLD, 12));
+   axis.setTickLabelPaint(Color.white);
+   axis.setLabelPaint(Color.white);
+   
+   plot.getRangeAxis().setTickLabelFont(new Font("",Font.BOLD,12));
+   plot.getRangeAxis().setTickLabelPaint(Color.white);
+   plot.getRangeAxis().setLabelPaint(Color.white);
+           
+   Image img = ImageIO.read(new File("image/alma.jpg"));
+
+   plot.setBackgroundPaint(new Color(204,204,255));
+   chart.setBackgroundImage(img);
+   chart.getTitle().setPaint(Color.white);
+   
 
   
   
@@ -74,7 +95,7 @@ public class Grafico extends ApplicationFrame {
   
   final ChartPanel chartPanel = new ChartPanel(chart);
  
-  chartPanel.setPreferredSize(new java.awt.Dimension(1000, 540));
+  chartPanel.setPreferredSize(new java.awt.Dimension(1040, 540));
   setContentPane(chartPanel);
   chartPanel.setMouseWheelEnabled(true);
   

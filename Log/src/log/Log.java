@@ -224,7 +224,7 @@ public class Log {
 	public static void main(String[] args) throws FileNotFoundException, IOException, ParseException {
             
             long startTime = System.currentTimeMillis();
-             List<String> finalresult2 = new ArrayList<String>();
+             
 
              
              
@@ -233,7 +233,7 @@ public class Log {
  //List<String> finalresult = l.getDataStored("/media/Respaldo/log/", "2014-01-31");
  
  List<String> finalresult = new ArrayList<String>();
- 
+
  
  //something temporal
  BufferedReader reader2 = new BufferedReader(new FileReader("/media/Respaldo/log/data/2014-01-27.txt"));
@@ -242,21 +242,25 @@ public class Log {
      finalresult.add(linea);
  }
  //something temporal
+  
+
+ 
+ 
  
  Frame f = new Frame();
  f.setGraph(finalresult);
  f.setVisible(true);//Plot the data
  
  
+
  
- /*
- List<String> obs = l.getObservationTime("/media/Respaldo/log/", "2014-01-27");
+// List<String> obs = l.getObservationTime("/media/Respaldo/log/", "2014-01-31");
  
- for(int i=0;i<obs.size();i++){
-     System.out.println(obs.get(i));
- }
+ //for(int i=0;i<obs.size();i++){
+ //    System.out.println(obs.get(i));
+ //}
  
- */
+ 
        
   
   long endTime   = System.currentTimeMillis();

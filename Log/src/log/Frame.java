@@ -11,6 +11,7 @@
 package log;
 import java.awt.Color;
 import java.awt.Font;
+import java.awt.MenuItem;
 import java.io.BufferedReader;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
@@ -22,6 +23,8 @@ import java.util.Calendar;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import javax.swing.JCheckBox;
+import javax.swing.JCheckBoxMenuItem;
 import org.jfree.chart.annotations.CategoryTextAnnotation;
 import org.jfree.chart.axis.CategoryAnchor;
 import org.jfree.chart.plot.CategoryPlot;
@@ -35,6 +38,17 @@ public class Frame extends javax.swing.JFrame {
 
     String currentDate;
     Grafico g;
+    int arrows[][]= {{0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
+                   {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
+                   {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
+                   {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
+                   {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
+                   {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
+                   {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
+                   {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
+                   {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
+                   {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0}};
+    
     /** Creates new form Frame */
     public Frame() {
         initComponents();
@@ -43,7 +57,7 @@ public class Frame extends javax.swing.JFrame {
     }
     
     //when the app is running a new chart is deployed with this method, where "date" is the new chart date
-    private void setNewgraph(String date){ 
+    private void setNewgraph(String date) throws FileNotFoundException, IOException{ 
         
         List<String> finalresult = new ArrayList<String>(); 
         
@@ -69,8 +83,8 @@ public class Frame extends javax.swing.JFrame {
         }
         //This is something temporal, just adding the needed data to the List    
         
-        this.jPanel1.remove(7); //remove the chart. The number can change, it depends of the components of the panel
-        this.dispose(); //totally delete the frame
+        this.jPanel1.remove(9); //remove the chart. The number can change, it depends of the components of the panel
+        this.jPanel1.repaint();
         
          try {
              this.setGraph(finalresult); //set a new graph to the panel with the new data of the selected date
@@ -79,7 +93,7 @@ public class Frame extends javax.swing.JFrame {
             Logger.getLogger(Frame.class.getName()).log(Level.SEVERE, null, ex);
         }
          
-        this.setVisible(true); //deploy the frame
+       
     
     }
     
@@ -87,7 +101,7 @@ public class Frame extends javax.swing.JFrame {
     //same method as before but this time the data of 2 days is deployed in the same chart
     //this method is activated when the "merge" button is pressed
     //the variable data indicates the current day shown in the panel, and the variable "date2" indicates the new day data to be shown
-    private void setNewgraph(String date, String date2){
+    private void setNewgraph(String date, String date2) throws FileNotFoundException, IOException{
         
         List<String> finalresult = new ArrayList<String>();
         List<String> finalresult2 = new ArrayList<String>();
@@ -123,14 +137,15 @@ public class Frame extends javax.swing.JFrame {
             Logger.getLogger(Frame.class.getName()).log(Level.SEVERE, null, ex);
         }
             
-     this.jPanel1.remove(7); //remove the chart
-     this.dispose();
+     this.jPanel1.remove(9); //remove the chart
+     this.jPanel1.repaint();
+   
         try {
             this.setGraph(finalresult, finalresult2);
         } catch (ParseException ex) {
             Logger.getLogger(Frame.class.getName()).log(Level.SEVERE, null, ex);
         }
-     this.setVisible(true);
+   
     
     }
     
@@ -172,8 +187,10 @@ public class Frame extends javax.swing.JFrame {
     
     //a method to set the button into the panel
     //this method should be called every time a new frame is initialized
-    private void setButton(String date[]) throws ParseException{
-        
+    private void setButton(String date[], int obser) throws ParseException, FileNotFoundException, IOException{
+        if(obser == 1){
+            
+            choice1.removeAll();
      currentDate = date[0];
      String nextDay, dayBefore;
      
@@ -197,12 +214,32 @@ public class Frame extends javax.swing.JFrame {
      buttonGroup1.add(jRadioButton1);
      buttonGroup1.add(jRadioButton2);
      
+     
+     List<String> obs = new ArrayList<String>();
+     obs = this.getObservation(currentDate);
+     choice1.insert("Observation", 0);
+     for(int i = 1; i<obs.size()+1;i++){
+         choice1.insert(obs.get(i-1), i);
+     }
+  
+    
+     
+    }
+        
+        
+        jPanel1.setBackground(new Color(204,204,255));
+        this.setBackground(new Color(204,204,255));
+        this.setResizable(false);
+        
     }
     
     //the method which actually set the chart into the panel
     // the List "finalresult" has the next format: yyyy-mm-ddThh#float, example: 2013-12-01T22#456.234
     //the float value indicates the amount od data transfered in the indicated date
-    public void setGraph(List<String> finalresult) throws ParseException{
+    public void setGraph(List<String> finalresult) throws ParseException, FileNotFoundException, IOException{
+        
+        
+        
         
         String T[] = new String[finalresult.size()];  //T allocates the hour member of the timestamp
         String S[] = {finalresult.get(0).substring(0, 10)}; //S allocates the day which is being shown in the chart                                                           
@@ -229,15 +266,18 @@ public class Frame extends javax.swing.JFrame {
      jPanel1.add(chart.getContentPane());
      
      
-     this.setButton(S);
-     
+     this.setButton(S, 1);
+     jButton5.doClick();
      
     
      
     }
     
     
-    public void setGraph(List<String> finalresult, List<String> finalresult2) throws ParseException{
+    public void setGraph(List<String> finalresult, List<String> finalresult2) throws ParseException, FileNotFoundException, IOException{
+        
+        
+        
         
         String T[] = new String[finalresult.size()];
         String S[] = {finalresult.get(0).substring(0, 10), finalresult2.get(0).substring(0, 10)};
@@ -265,8 +305,9 @@ public class Frame extends javax.swing.JFrame {
      jPanel1.add(chart.getContentPane());
      
      
-     this.setButton(S);
      
+     this.setButton(S, 0);
+     jButton5.doClick();
      
     
      
@@ -274,8 +315,12 @@ public class Frame extends javax.swing.JFrame {
     
     
     private void setArrow(String i, String e, String u, String o){
-        String arrow = "";
+      
         
+        
+        String arrow = "";
+        String T = i.substring(11, 13);
+        int index = Integer.parseInt(T);
         int ihour = Integer.parseInt(i.substring(11, 13)); //initial hour
         int ehour = Integer.parseInt(e.substring(11, 13)); //ended hour
         int imin = Integer.parseInt(i.substring(14, 16)); //initial minute
@@ -294,7 +339,8 @@ public class Frame extends javax.swing.JFrame {
         String uid = arrow;
         String obs = arrow;
         
-        int x = (duration-1)/5;
+        double x = (duration-1)/7;  // 1 line are 7*2 minutes, so if the chart's size changes, this number can be adjusted
+        x = (int) x;
         String gap="";
         
         if(x>=2){
@@ -322,25 +368,48 @@ public class Frame extends javax.swing.JFrame {
         obs=obs+o;
         
         
-         final CategoryPlot plot = g.getChart().getCategoryPlot();
+         int counter = 0;
+         int row = 0;
          
-         final CategoryTextAnnotation ca = new CategoryTextAnnotation(arrow,"T03",1000);
+         for(int r=row;r<10;r++){
+             for(int k = index;k<index+7&&k<24;k++){
+                 counter = counter + arrows[r][k]; //should be 0 if it's all clear, gt 0 otherwise
+               
+             }
+             if(counter==0){
+                 row = r; //the row where the arrow will be displayed            
+                 r = 11; //to exit the loop
+                
+             }
+             else{
+                 counter = 0;
+             }
+         }
+         
+         final CategoryPlot plot = g.getChart().getCategoryPlot();
+
+         int jump = (int) (plot.getRangeAxis(0).getUpperBound())/10;
+         int position = jump/5;
+          
+          
+          
+         final CategoryTextAnnotation ca = new CategoryTextAnnotation(arrow,"T"+T,position+(jump*row));
          ca.setFont(new Font("f", Font.PLAIN, 10));
          ca.setTextAnchor(TextAnchor.CENTER_LEFT);
          ca.setCategoryAnchor(CategoryAnchor.START); 
          
-         final CategoryTextAnnotation ca2 = new CategoryTextAnnotation(gap,"T03",1000);
+         final CategoryTextAnnotation ca2 = new CategoryTextAnnotation(gap,"T"+T,position+(jump*row));
          ca2.setFont(new Font("f", Font.PLAIN, 10));
          ca2.setTextAnchor(TextAnchor.CENTER_LEFT);
          ca2.setCategoryAnchor(CategoryAnchor.START); 
          
-         final CategoryTextAnnotation ca3 = new CategoryTextAnnotation(uid,"T03",1400);
+         final CategoryTextAnnotation ca3 = new CategoryTextAnnotation(uid,"T"+T,(position+(jump*row))+(jump/3.1));
          ca3.setFont(new Font("f", Font.PLAIN, 12));
          ca3.setTextAnchor(TextAnchor.CENTER_LEFT);
          ca3.setCategoryAnchor(CategoryAnchor.START);
          
          
-         final CategoryTextAnnotation ca4 = new CategoryTextAnnotation(obs,"T03",1900);
+         final CategoryTextAnnotation ca4 = new CategoryTextAnnotation(obs,"T"+T,(position+(jump*row))+(jump/1.5));
          ca4.setFont(new Font("f", Font.PLAIN, 12));
          ca4.setTextAnchor(TextAnchor.CENTER_LEFT);
          ca4.setCategoryAnchor(CategoryAnchor.START);
@@ -349,10 +418,38 @@ public class Frame extends javax.swing.JFrame {
          plot.addAnnotation(ca2);
          plot.addAnnotation(ca3);
          plot.addAnnotation(ca4);
-       
-      
+         
+       if(index<18){    
+        arrows[row][index]=1;
+        arrows[row][index+1]=1;
+        arrows[row][index+2]=1;
+        arrows[row][index+3]=1;
+        arrows[row][index+4]=1;
+        arrows[row][index+5]=1;
+        arrows[row][index+6]=1;
+       }
+       else{
+           
+           for(int w=index;w<24;w++){
+               arrows[row][w]=1;
+           }
+       }
     }
     
+    
+    private List<String> getObservation(String date) throws FileNotFoundException, IOException{
+         //something temporal
+        List<String> finalresult2 = new ArrayList<String>();
+     BufferedReader reader3 = new BufferedReader(new FileReader("/media/Respaldo/log/data/"+date+"ob.txt"));
+     String linea2;
+     while (  (linea2 = reader3.readLine()) != null) {
+     finalresult2.add(linea2);
+          
+ }
+     return finalresult2;
+     
+ //something temporal
+    }
     /** This method is called from within the constructor to
      * initialize the form.
      * WARNING: Do NOT modify this code. The content of this method is
@@ -371,6 +468,8 @@ public class Frame extends javax.swing.JFrame {
         jRadioButton1 = new javax.swing.JRadioButton();
         jRadioButton2 = new javax.swing.JRadioButton();
         jButton4 = new javax.swing.JButton();
+        choice1 = new java.awt.Choice();
+        jButton5 = new javax.swing.JButton();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
 
@@ -401,10 +500,17 @@ public class Frame extends javax.swing.JFrame {
 
         jRadioButton2.setText("jRadioButton2");
 
-        jButton4.setText("Observation");
+        jButton4.setText("Draw Arrow");
         jButton4.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 jButton4ActionPerformed(evt);
+            }
+        });
+
+        jButton5.setText("Clean");
+        jButton5.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jButton5ActionPerformed(evt);
             }
         });
 
@@ -412,52 +518,67 @@ public class Frame extends javax.swing.JFrame {
         jPanel1.setLayout(jPanel1Layout);
         jPanel1Layout.setHorizontalGroup(
             jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel1Layout.createSequentialGroup()
-                .addContainerGap(523, Short.MAX_VALUE)
+            .addGroup(jPanel1Layout.createSequentialGroup()
+                .addContainerGap(20, Short.MAX_VALUE)
                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(jPanel1Layout.createSequentialGroup()
-                        .addGap(21, 21, 21)
-                        .addComponent(jButton3))
-                    .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                        .addComponent(jLabel1, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, 113, Short.MAX_VALUE)
-                        .addComponent(jRadioButton1, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                        .addComponent(jButton1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                        .addComponent(jButton2, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                        .addComponent(jRadioButton2, javax.swing.GroupLayout.PREFERRED_SIZE, 125, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addComponent(jButton4, javax.swing.GroupLayout.Alignment.TRAILING)))
-                .addGap(21, 21, 21))
+                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel1Layout.createSequentialGroup()
+                        .addComponent(jButton5)
+                        .addGap(51, 51, 51))
+                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel1Layout.createSequentialGroup()
+                        .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                            .addGroup(jPanel1Layout.createSequentialGroup()
+                                .addGap(601, 601, 601)
+                                .addComponent(jLabel1, javax.swing.GroupLayout.PREFERRED_SIZE, 113, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addGap(52, 52, 52))
+                            .addGroup(jPanel1Layout.createSequentialGroup()
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(choice1, javax.swing.GroupLayout.PREFERRED_SIZE, 100, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                        .addGap(38, 38, 38))
+                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel1Layout.createSequentialGroup()
+                        .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING, false)
+                            .addComponent(jRadioButton2, javax.swing.GroupLayout.Alignment.LEADING, 0, 0, Short.MAX_VALUE)
+                            .addComponent(jRadioButton1, javax.swing.GroupLayout.Alignment.LEADING, 0, 0, Short.MAX_VALUE)
+                            .addComponent(jButton1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                            .addComponent(jButton2, javax.swing.GroupLayout.DEFAULT_SIZE, 122, Short.MAX_VALUE)
+                            .addComponent(jButton4, javax.swing.GroupLayout.Alignment.LEADING))
+                        .addGap(26, 26, 26))
+                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel1Layout.createSequentialGroup()
+                        .addComponent(jButton3)
+                        .addGap(48, 48, 48))))
         );
         jPanel1Layout.setVerticalGroup(
             jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(jPanel1Layout.createSequentialGroup()
                 .addContainerGap()
                 .addComponent(jLabel1, javax.swing.GroupLayout.PREFERRED_SIZE, 21, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(18, 18, 18)
-                .addComponent(jButton1)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jButton2)
-                .addGap(39, 39, 39)
-                .addComponent(jRadioButton1)
-                .addGap(6, 6, 6)
-                .addComponent(jRadioButton2)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addComponent(jButton1)
+                .addGap(12, 12, 12)
+                .addComponent(jButton2)
+                .addGap(18, 18, 18)
+                .addComponent(jRadioButton1)
+                .addGap(13, 13, 13)
+                .addComponent(jRadioButton2)
+                .addGap(18, 18, 18)
                 .addComponent(jButton3)
-                .addGap(27, 27, 27)
+                .addGap(48, 48, 48)
+                .addComponent(choice1, javax.swing.GroupLayout.PREFERRED_SIZE, 43, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(13, 13, 13)
                 .addComponent(jButton4)
-                .addContainerGap(90, Short.MAX_VALUE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addComponent(jButton5)
+                .addContainerGap(158, Short.MAX_VALUE))
         );
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(layout.createSequentialGroup()
-                .addComponent(jPanel1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap(41, Short.MAX_VALUE))
+            .addComponent(jPanel1, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(jPanel1, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+            .addComponent(jPanel1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
         );
 
         pack();
@@ -467,14 +588,26 @@ private void jButton1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRS
 // TODO add your handling code here:
     
     String date = this.getNextday(currentDate);
-    this.setNewgraph(date);
+        try {
+            this.setNewgraph(date);
+        } catch (FileNotFoundException ex) {
+            Logger.getLogger(Frame.class.getName()).log(Level.SEVERE, null, ex);
+        } catch (IOException ex) {
+            Logger.getLogger(Frame.class.getName()).log(Level.SEVERE, null, ex);
+        }
     
 }//GEN-LAST:event_jButton1ActionPerformed
 
 private void jButton2ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton2ActionPerformed
 // TODO add your handling code here:
     String date = this.getDaybefore(currentDate);
-    this.setNewgraph(date);
+        try {
+            this.setNewgraph(date);
+        } catch (FileNotFoundException ex) {
+            Logger.getLogger(Frame.class.getName()).log(Level.SEVERE, null, ex);
+        } catch (IOException ex) {
+            Logger.getLogger(Frame.class.getName()).log(Level.SEVERE, null, ex);
+        }
     
 }//GEN-LAST:event_jButton2ActionPerformed
 
@@ -482,10 +615,22 @@ private void jButton3ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRS
 // TODO add your handling code here:
     
     if(jRadioButton1.isSelected()){
-        this.setNewgraph(currentDate, this.getDaybefore(currentDate));
+            try {
+                this.setNewgraph(currentDate, this.getDaybefore(currentDate));
+            } catch (FileNotFoundException ex) {
+                Logger.getLogger(Frame.class.getName()).log(Level.SEVERE, null, ex);
+            } catch (IOException ex) {
+                Logger.getLogger(Frame.class.getName()).log(Level.SEVERE, null, ex);
+            }
     }
     else if(jRadioButton2.isSelected()){
-        this.setNewgraph(currentDate, this.getNextday(currentDate));
+            try {
+                this.setNewgraph(currentDate, this.getNextday(currentDate));
+            } catch (FileNotFoundException ex) {
+                Logger.getLogger(Frame.class.getName()).log(Level.SEVERE, null, ex);
+            } catch (IOException ex) {
+                Logger.getLogger(Frame.class.getName()).log(Level.SEVERE, null, ex);
+            }
     }
     
     
@@ -495,10 +640,53 @@ private void jButton3ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRS
 
 private void jButton4ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton4ActionPerformed
 // TODO add your handling code here:
-
-        setArrow("2014-01-27T03:26:00", "2014-01-27T05:02:43","uid://A002/X799cfd/X20e","SBEX"); 
-
+        if(!choice1.getSelectedItem().equals("Observation")){
+                
+                 String obs = choice1.getSelectedItem();
+                 String lines[];
+                 lines = obs.split(" ");
+                            
+                 String start = lines[0];
+                 String end = lines[1];
+                 String uid = lines[2];
+                 String ob = lines[3];
+              
+                 setArrow(start, end, uid, ob); 
+        }
+        
+    /*    final CategoryPlot plot = g.getChart().getCategoryPlot();
+         String arrow = "\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u25BA";
+         final CategoryTextAnnotation ca = new CategoryTextAnnotation(arrow,"T03",1000);
+         ca.setFont(new Font("f", Font.PLAIN, 10));
+         ca.setTextAnchor(TextAnchor.CENTER_LEFT);
+         ca.setCategoryAnchor(CategoryAnchor.START); 
+         
+         plot.addAnnotation(ca);
+         
+   */     
+        
+        
 }//GEN-LAST:event_jButton4ActionPerformed
+
+private void jButton5ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton5ActionPerformed
+
+    
+    final CategoryPlot plot = g.getChart().getCategoryPlot();
+    
+    plot.clearAnnotations();
+    for(int i=0;i<24;i++){
+        arrows[0][i] = 0;
+        arrows[1][i] = 0;
+        arrows[2][i] = 0;
+        arrows[3][i] = 0;
+        arrows[4][i] = 0;
+        arrows[5][i] = 0;
+        arrows[6][i] = 0;
+        arrows[7][i] = 0;
+        arrows[8][i] = 0;
+        arrows[9][i] = 0;
+    }
+}//GEN-LAST:event_jButton5ActionPerformed
 
     /**
      * @param args the command line arguments
@@ -538,19 +726,23 @@ private void jButton4ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRS
             @Override
             public void run() {
                 
-                
+                System.out.println("hola");
             }
         });
     }
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.ButtonGroup buttonGroup1;
+    private java.awt.Choice choice1;
     private javax.swing.JButton jButton1;
     private javax.swing.JButton jButton2;
     private javax.swing.JButton jButton3;
     private javax.swing.JButton jButton4;
+    private javax.swing.JButton jButton5;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JPanel jPanel1;
     private javax.swing.JRadioButton jRadioButton1;
     private javax.swing.JRadioButton jRadioButton2;
     // End of variables declaration//GEN-END:variables
+
+
 }
