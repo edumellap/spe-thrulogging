@@ -22,6 +22,7 @@ import java.util.Calendar;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import org.elasticsearch.client.Client;
 import org.jfree.chart.annotations.CategoryTextAnnotation;
 import org.jfree.chart.axis.CategoryAnchor;
 import org.jfree.chart.plot.CategoryPlot;
@@ -35,6 +36,7 @@ public class Frame extends javax.swing.JFrame {
 
     String currentDate; //the date that is being shown in the chart
     GChart g; //the current GChart inside the panel
+    Client client;
     int arrows[][]= {{0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0}, //this array allows to plot the arrows in the chart 
                      {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0}, //without overlapping them
                      {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0}, 
@@ -47,62 +49,26 @@ public class Frame extends javax.swing.JFrame {
                      {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0}};
     
     /** Creates new form Frame */
-    public Frame() {
+    public Frame(Client client) {
         initComponents();
-      
+        this.client = client;
        
     }
     
     //when the app is running a new chart is deployed with this method, where "date" is the new chart date
-    private void setNewgraph(String date) throws FileNotFoundException, IOException{ 
+    private void setNewgraph(String date) throws FileNotFoundException, IOException, ParseException{ 
         
         List<String> finalresult = new ArrayList<String>(); 
+   
+        LogExtracter le = new LogExtracter();
         
-        
-        //This is something temporal, should be replaced by an elasticsearch query to get the data or, if it took to long, by a buffer
-        //read of the final data
-        BufferedReader reader2 = null;
-       
-        try {
-            
-            reader2 = new BufferedReader(new FileReader("/media/Respaldo/log/data/"+date+".txt"));
-            
-            
-        } catch (FileNotFoundException ex) {
-            Logger.getLogger(Frame.class.getName()).log(Level.SEVERE, null, ex);
-        }
-        
-        String linea;
-        
-        try {
-            
-            
-            while (  (linea = reader2.readLine()) != null) {
-            finalresult.add(linea);
-        }                        
-            
-            
-        } catch (IOException ex) {
-            Logger.getLogger(Frame.class.getName()).log(Level.SEVERE, null, ex);
-        }
-        //This is something temporal, just adding the needed data to the List    
-        
-        this.jPanel1.remove(9); //remove the chart. The number can change, it depends of the components of the panel
-        
-        
-         try {
-             
-             
-             this.setGraph(finalresult); //set a new graph to the panel with the new data of the selected date
-             
-        }
-         
-         
-         catch (ParseException ex) {
-            Logger.getLogger(Frame.class.getName()).log(Level.SEVERE, null, ex);
-        }
-         
-       this.jPanel1.repaint(); //reapint the panel
+        finalresult = le.getDataStored("Successfully stored", date, this.client);
+ 
+        this.jPanel1.remove(8); //remove the chart. The number can change, it depends of the components of the panel
+
+        this.setGraph(finalresult); //set a new graph to the panel with the new data of the selected date
+      
+        this.jPanel1.repaint(); //reapint the panel
     
     }
     
@@ -110,86 +76,21 @@ public class Frame extends javax.swing.JFrame {
     //same method as before but this time the data of 2 days is deployed in the same chart
     //this method is activated when the "merge" button is pressed
     //the variable data indicates the current day shown in the panel, and the variable "date2" indicates the new day data to be shown
-    private void setNewgraph(String date, String date2) throws FileNotFoundException, IOException{
+    private void setNewgraph(String date, String date2) throws FileNotFoundException, IOException, ParseException{
         
         List<String> finalresult = new ArrayList<String>();
         List<String> finalresult2 = new ArrayList<String>();
+
+        LogExtracter le = new LogExtracter();
+        
+        finalresult = le.getDataStored("Successfully stored", date, this.client);
+        finalresult2= le.getDataStored("Successfully stored", date2, this.client);
  
-     BufferedReader reader2 = null;
-     
-        try {
-            
-            
-            reader2 = new BufferedReader(new FileReader("/media/Respaldo/log/data/"+date+".txt"));
-        } 
-        
-        
-        catch (FileNotFoundException ex) {
-            Logger.getLogger(Frame.class.getName()).log(Level.SEVERE, null, ex);
-        }
-        
-        
-     String linea;
-     
-     
-        try {
-            
-            
-            while (  (linea = reader2.readLine()) != null) {
-            finalresult.add(linea);
-        }
-            
-            
-        } catch (IOException ex) {
-            Logger.getLogger(Frame.class.getName()).log(Level.SEVERE, null, ex);
-        }
-        
-        
-        BufferedReader reader3 = null;
-        
-        try {
-            
-            
-            reader3 = new BufferedReader(new FileReader("/media/Respaldo/log/data/"+date2+".txt"));
-        } 
-        
-        
-        catch (FileNotFoundException ex) {
-            Logger.getLogger(Frame.class.getName()).log(Level.SEVERE, null, ex);
-        }
-        
-        
-     String linea2;
-     
-     
-        try {
-           
-            
-            while (  (linea2 = reader3.readLine()) != null) {
-            finalresult2.add(linea2);
-        }
-            
-            
-            
-        } catch (IOException ex) {
-            Logger.getLogger(Frame.class.getName()).log(Level.SEVERE, null, ex);
-        }
-            
-     this.jPanel1.remove(9); //remove the chart
-     
-   
-        try {
-            
-            
-            this.setGraph(finalresult, finalresult2);
-        } 
-        
-        
-        catch (ParseException ex) {
-            Logger.getLogger(Frame.class.getName()).log(Level.SEVERE, null, ex);
-        }
-   
-    this.jPanel1.repaint();
+        this.jPanel1.remove(8); //remove the chart. The number can change, it depends of the components of the panel
+
+        this.setGraph(finalresult, finalresult2); //set a new graph to the panel with the new data of the selected date
+      
+        this.jPanel1.repaint(); //reapint the panel
     }
     
     
@@ -300,11 +201,11 @@ public class Frame extends javax.swing.JFrame {
   
         RefineryUtilities.centerFrameOnScreen(chart);
          
-     jPanel1.add(chart.getContentPane());
+        jPanel1.add(chart.getContentPane());
      
      
-     this.setButton(S);
-     jButton5.doClick();
+        this.setButton(S);
+        this.clean();
      
     
      
@@ -344,7 +245,7 @@ public class Frame extends javax.swing.JFrame {
      
      
      this.setButton(S);
-     jButton5.doClick();
+     this.clean();
      
     
      
@@ -475,17 +376,32 @@ public class Frame extends javax.swing.JFrame {
     
     
     private List<String> getObservation(String date) throws FileNotFoundException, IOException{
-         //something temporal
-        List<String> finalresult2 = new ArrayList<String>();
-     BufferedReader reader3 = new BufferedReader(new FileReader("/media/Respaldo/log/data/"+date+"ob.txt"));
-     String linea2;
-     while (  (linea2 = reader3.readLine()) != null) {
-     finalresult2.add(linea2);
-          
- }
+     List<String> finalresult2 = new ArrayList<String>();
+     LogExtracter le = new LogExtracter();   
+     
+     finalresult2 = le.getObservationTime(date, this.client);
+     
      return finalresult2;
      
- //something temporal
+
+    }
+    
+    private void clean(){
+          final CategoryPlot plot = g.getChart().getCategoryPlot();
+    
+    plot.clearAnnotations();
+    for(int i=0;i<24;i++){
+        arrows[0][i] = 0;
+        arrows[1][i] = 0;
+        arrows[2][i] = 0;
+        arrows[3][i] = 0;
+        arrows[4][i] = 0;
+        arrows[5][i] = 0;
+        arrows[6][i] = 0;
+        arrows[7][i] = 0;
+        arrows[8][i] = 0;
+        arrows[9][i] = 0;
+    }
     }
     /** This method is called from within the constructor to
      * initialize the form.
@@ -500,7 +416,6 @@ public class Frame extends javax.swing.JFrame {
         jPanel1 = new javax.swing.JPanel();
         jButton1 = new javax.swing.JButton();
         jButton2 = new javax.swing.JButton();
-        jLabel1 = new javax.swing.JLabel();
         jButton3 = new javax.swing.JButton();
         jRadioButton1 = new javax.swing.JRadioButton();
         jRadioButton2 = new javax.swing.JRadioButton();
@@ -556,20 +471,13 @@ public class Frame extends javax.swing.JFrame {
         jPanel1Layout.setHorizontalGroup(
             jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(jPanel1Layout.createSequentialGroup()
-                .addContainerGap(20, Short.MAX_VALUE)
+                .addContainerGap(678, Short.MAX_VALUE)
                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel1Layout.createSequentialGroup()
                         .addComponent(jButton5)
                         .addGap(51, 51, 51))
                     .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel1Layout.createSequentialGroup()
-                        .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                            .addGroup(jPanel1Layout.createSequentialGroup()
-                                .addGap(601, 601, 601)
-                                .addComponent(jLabel1, javax.swing.GroupLayout.PREFERRED_SIZE, 113, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                .addGap(52, 52, 52))
-                            .addGroup(jPanel1Layout.createSequentialGroup()
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(choice1, javax.swing.GroupLayout.PREFERRED_SIZE, 100, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                        .addComponent(choice1, javax.swing.GroupLayout.PREFERRED_SIZE, 100, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addGap(38, 38, 38))
                     .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel1Layout.createSequentialGroup()
                         .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING, false)
@@ -586,9 +494,7 @@ public class Frame extends javax.swing.JFrame {
         jPanel1Layout.setVerticalGroup(
             jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(jPanel1Layout.createSequentialGroup()
-                .addContainerGap()
-                .addComponent(jLabel1, javax.swing.GroupLayout.PREFERRED_SIZE, 21, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addGap(45, 45, 45)
                 .addComponent(jButton1)
                 .addGap(12, 12, 12)
                 .addComponent(jButton2)
@@ -622,11 +528,15 @@ public class Frame extends javax.swing.JFrame {
     }// </editor-fold>//GEN-END:initComponents
 
 private void jButton1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton1ActionPerformed
-// TODO add your handling code here:
+// "Next Day" button
     
     String date = this.getNextday(currentDate);
         try {
-            this.setNewgraph(date);
+            try {
+                this.setNewgraph(date);
+            } catch (ParseException ex) {
+                Logger.getLogger(Frame.class.getName()).log(Level.SEVERE, null, ex);
+            }
         } catch (FileNotFoundException ex) {
             Logger.getLogger(Frame.class.getName()).log(Level.SEVERE, null, ex);
         } catch (IOException ex) {
@@ -636,10 +546,15 @@ private void jButton1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRS
 }//GEN-LAST:event_jButton1ActionPerformed
 
 private void jButton2ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton2ActionPerformed
-// TODO add your handling code here:
+// "Previous Day" button
+    
     String date = this.getDaybefore(currentDate);
         try {
-            this.setNewgraph(date);
+            try {
+                this.setNewgraph(date);
+            } catch (ParseException ex) {
+                Logger.getLogger(Frame.class.getName()).log(Level.SEVERE, null, ex);
+            }
         } catch (FileNotFoundException ex) {
             Logger.getLogger(Frame.class.getName()).log(Level.SEVERE, null, ex);
         } catch (IOException ex) {
@@ -649,11 +564,15 @@ private void jButton2ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRS
 }//GEN-LAST:event_jButton2ActionPerformed
 
 private void jButton3ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton3ActionPerformed
-// TODO add your handling code here:
+// "Merge" button
     
     if(jRadioButton1.isSelected()){
             try {
-                this.setNewgraph(currentDate, this.getDaybefore(currentDate));
+                try {
+                    this.setNewgraph(currentDate, this.getDaybefore(currentDate));
+                } catch (ParseException ex) {
+                    Logger.getLogger(Frame.class.getName()).log(Level.SEVERE, null, ex);
+                }
             } catch (FileNotFoundException ex) {
                 Logger.getLogger(Frame.class.getName()).log(Level.SEVERE, null, ex);
             } catch (IOException ex) {
@@ -662,7 +581,11 @@ private void jButton3ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRS
     }
     else if(jRadioButton2.isSelected()){
             try {
-                this.setNewgraph(currentDate, this.getNextday(currentDate));
+                try {
+                    this.setNewgraph(currentDate, this.getNextday(currentDate));
+                } catch (ParseException ex) {
+                    Logger.getLogger(Frame.class.getName()).log(Level.SEVERE, null, ex);
+                }
             } catch (FileNotFoundException ex) {
                 Logger.getLogger(Frame.class.getName()).log(Level.SEVERE, null, ex);
             } catch (IOException ex) {
@@ -676,7 +599,8 @@ private void jButton3ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRS
 }//GEN-LAST:event_jButton3ActionPerformed
 
 private void jButton4ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton4ActionPerformed
-// TODO add your handling code here:
+// "Draw Arrow" button
+    
         if(!choice1.getSelectedItem().equals("Observation")){
                 
                  String obs = choice1.getSelectedItem();
@@ -690,39 +614,13 @@ private void jButton4ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRS
               
                  setArrow(start, end, uid, ob); 
         }
-        
-    /*    final CategoryPlot plot = g.getChart().getCategoryPlot();
-         String arrow = "\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u25BA";
-         final CategoryTextAnnotation ca = new CategoryTextAnnotation(arrow,"T03",1000);
-         ca.setFont(new Font("f", Font.PLAIN, 10));
-         ca.setTextAnchor(TextAnchor.CENTER_LEFT);
-         ca.setCategoryAnchor(CategoryAnchor.START); 
-         
-         plot.addAnnotation(ca);
-         
-   */     
-        
-        
+      
 }//GEN-LAST:event_jButton4ActionPerformed
 
 private void jButton5ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton5ActionPerformed
-
-    
-    final CategoryPlot plot = g.getChart().getCategoryPlot();
-    
-    plot.clearAnnotations();
-    for(int i=0;i<24;i++){
-        arrows[0][i] = 0;
-        arrows[1][i] = 0;
-        arrows[2][i] = 0;
-        arrows[3][i] = 0;
-        arrows[4][i] = 0;
-        arrows[5][i] = 0;
-        arrows[6][i] = 0;
-        arrows[7][i] = 0;
-        arrows[8][i] = 0;
-        arrows[9][i] = 0;
-    }
+// "Clean" button
+    this.clean();
+  
 }//GEN-LAST:event_jButton5ActionPerformed
 
     /**
@@ -763,7 +661,7 @@ private void jButton5ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRS
             @Override
             public void run() {
                 
-                System.out.println("hola");
+               
             }
         });
     }
@@ -775,7 +673,6 @@ private void jButton5ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRS
     private javax.swing.JButton jButton3;
     private javax.swing.JButton jButton4;
     private javax.swing.JButton jButton5;
-    private javax.swing.JLabel jLabel1;
     private javax.swing.JPanel jPanel1;
     private javax.swing.JRadioButton jRadioButton1;
     private javax.swing.JRadioButton jRadioButton2;

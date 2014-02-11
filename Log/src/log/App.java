@@ -1,10 +1,31 @@
 package log;
  
 
+import org.elasticsearch.action.search.SearchResponse;
+import org.elasticsearch.common.settings.Settings;
+import org.elasticsearch.common.settings.ImmutableSettings;
+import org.elasticsearch.node.Node;
 import java.io.*;
 import java.io.BufferedReader;
+import java.net.URL;
 import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.*;
+import org.elasticsearch.client.Client;
+import org.elasticsearch.client.transport.TransportClient;
+import org.elasticsearch.common.transport.InetSocketTransportAddress;
+import org.apache.lucene.util.Version;
+import org.elasticsearch.action.search.SearchType;
+import org.elasticsearch.index.query.FilterBuilders;
+import org.elasticsearch.index.query.MatchQueryBuilder.Operator;
+import org.elasticsearch.index.query.QueryBuilders;
+import org.elasticsearch.index.query.QueryBuilders.*;
+import org.elasticsearch.search.SearchHit;
+import org.elasticsearch.search.SearchHits;
+import org.elasticsearch.search.internal.InternalSearchHit;
+
+
+
 
 
  
@@ -12,36 +33,21 @@ public class App {
   
 	public static void main(String[] args) throws FileNotFoundException, IOException, ParseException {
             
-            long startTime = System.currentTimeMillis();
-             
-            LogExtracter le = new LogExtracter();
-            
-            //List<String> finalresult = le.getDataStored("/media/Respaldo/log/", "2014-01-31");
             List<String> finalresult = new ArrayList<String>();
              
-            
-            //something temporal
-            BufferedReader reader2 = new BufferedReader(new FileReader("/media/Respaldo/log/data/2014-01-27.txt"));
-            String linea;
-            while (  (linea = reader2.readLine()) != null) {
-               finalresult.add(linea);
-            }
-            //something temporal
-             
-            Frame f = new Frame();
+            LogExtracter le = new LogExtracter();
+            Client client = new TransportClient().addTransportAddress(new InetSocketTransportAddress("ariadne.osf.alma.cl", 15040));
+          
+            Date date=new Date();
+            String currentDate = le.getTimestamp(date.getTime()).substring(0, 10);
+              
+            finalresult = le.getDataStored("Successfully stored", currentDate, client);
+         
+        
+            Frame f = new Frame(client);
             f.setGraph(finalresult);
             f.setVisible(true);//Plot the data
- 
-            // List<String> obs = l.getObservationTime("/media/Respaldo/log/", "2014-01-31");
- 
-            //for(int i=0;i<obs.size();i++){
-            //    System.out.println(obs.get(i));
-             //}
- 
-             long endTime   = System.currentTimeMillis();
-             long totalTime = endTime - startTime;
-             float tTime = (float) totalTime/60000;
-             System.out.println("the program took "+tTime+" minutes to finish");
 
-      }     
+    
+        }     
  }

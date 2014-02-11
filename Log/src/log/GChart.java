@@ -51,11 +51,16 @@ public class GChart extends ApplicationFrame {
    plot.getRangeAxis().setTickLabelFont(new Font("",Font.BOLD,12));
    plot.getRangeAxis().setTickLabelPaint(Color.white);
    plot.getRangeAxis().setLabelPaint(Color.white);
-           
-   Image img = ImageIO.read(new File("image/alma.jpg"));
-
+   
+   Image img = null;
+   try {
+   img = ImageIO.read(new File("image/alma.jpg"));
+   } catch (Exception e) {
+        e.fillInStackTrace();
+   }
    plot.setBackgroundPaint(new Color(204,204,255));
    chart.setBackgroundImage(img);
+   chart.setBackgroundPaint(Color.BLUE);
    chart.getTitle().setPaint(Color.white);
    
 
