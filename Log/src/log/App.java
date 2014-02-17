@@ -31,23 +31,46 @@ import org.elasticsearch.search.internal.InternalSearchHit;
  
 public class App {
   
-	public static void main(String[] args) throws FileNotFoundException, IOException, ParseException {
+	public static void main(String[] args) throws FileNotFoundException, IOException, ParseException, InterruptedException {
             
+         
+           
+          
+            FirstFrame ff = new FirstFrame();
+           ff.setVisible(true);
+          
+                           
+            /*
             List<String> finalresult = new ArrayList<String>();
              
             LogExtracter le = new LogExtracter();
-            Client client = new TransportClient().addTransportAddress(new InetSocketTransportAddress("ariadne.osf.alma.cl", 15040));
-          
+            String host = "ariadne.osf.alma.cl";
+            int port=15040;
+            
+            
+            
+            
+            
+            
             Date date=new Date();
             String currentDate = le.getTimestamp(date.getTime()).substring(0, 10);
               
             finalresult = le.getDataStored("Successfully stored", currentDate, client);
          
         
-            Frame f = new Frame(client);
+            Frame f = new Frame(client, host, port);
             f.setGraph(finalresult);
             f.setVisible(true);//Plot the data
-
-    
-        }     
+       
+        
+         */
+            }
+      
+      
+      
+      
+        
+       
+        
+        
  }

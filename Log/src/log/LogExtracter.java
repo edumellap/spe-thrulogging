@@ -29,9 +29,12 @@ import org.elasticsearch.index.query.QueryBuilders;
  */
 public class LogExtracter {
            
-  
+      private String prefix = "@fields"; //this prefix vary depending of the DB tha app connect to. With a newer version
+                                        //of alogging2mq this should be "_source", and  with an odler version "@field"
     
     public List<String> getDataStored(String pattern, String date, Client client) throws FileNotFoundException, IOException{
+            
+        
             
             String line = null;          
             String line2[]; //array that has each 'word' of a single line
@@ -44,30 +47,31 @@ public class LogExtracter {
             String bytes;
             String message, ts;
             List<String> datalist = new ArrayList<String>();
-            
             long from  =  this.getMilliseconds(date);
+            
+            date = this.getTimestamp(from).substring(0, 10);
             long to = from + 86400000L; //next day
-            
+        
 
-            
-
-      SearchResponse response = client.prepareSearch().addFields("@fields.logMessage", "@fields.date").setSearchType(SearchType.DFS_QUERY_THEN_FETCH)
-.setQuery(QueryBuilders.matchPhraseQuery("logMessage", pattern)).setFilter(FilterBuilders.rangeFilter("date").from(from).to(to)).setFrom(0).setSize(10000).execute().actionGet();
+      SearchResponse response = client.prepareSearch().addFields(prefix+".logMessage", prefix+".date").setSearchType(SearchType.DFS_QUERY_THEN_FETCH).setFilter(FilterBuilders.rangeFilter("date").from(from).to(to))
+.setQuery(QueryBuilders.matchPhraseQuery("logMessage", pattern)).setFrom(0).setSize(10000).execute().actionGet();
             
  
             
             long hits = response.getHits().totalHits(); //number of results
             long day;
-            
+    
             for(int i = 0; i<hits ; i++){
         
               //timestamp YY/MM/DDTHH    
-              day = response.getHits().getAt(i).field("@fields.date").getValue();          
+           
+              day = response.getHits().getAt(i).field(prefix+".date").getValue();          
               ts = this.getTimestamp(day).substring(0, 13);
+              
         
         
               //bytes written
-              message = response.getHits().getAt(i).field("@fields.logMessage").getValue();
+              message = response.getHits().getAt(i).field(prefix+".logMessage").getValue();
               data = message.split(" ");             
               bytes = data[8];
               
@@ -125,8 +129,9 @@ public class LogExtracter {
                 
                 for(int i = 0;i<l;){
                                                            
-                    if(!result.get(i).substring(0, 13).equalsIgnoreCase(date+hour[j])){
-                        result.add(date+hour[j]+"#0");                       
+                    if(!result.get(i).substring(0, 13).equals(date+hour[j])){
+                        result.add(date+hour[j]+"#0");     
+                        
                         j++;
                        
                     }
@@ -144,7 +149,7 @@ public class LogExtracter {
                 
                Collections.sort(result);
      
-             
+            
            return result;
         }
     
@@ -167,23 +172,21 @@ public class LogExtracter {
             List<String> obs = new ArrayList<String>();  //final array that has each timestamp value
             List<String> finalresult = new ArrayList<String>();
             
-             
             long from  =  this.getMilliseconds(date);
-            long to = from + 86400000L; //next day
+            long to = from + 86399999L; //next day
             
-            SearchResponse response = client.prepareSearch().addFields("@fields.logMessage", "@fields.date").setSearchType(SearchType.DFS_QUERY_THEN_FETCH)
-.setQuery(QueryBuilders.matchPhraseQuery("logMessage", "Received ScriptInformationEvent for ExecBlock")).setFilter(FilterBuilders.rangeFilter("date").from(from).to(to)).setFrom(0).setSize(10000).execute().actionGet();
+            SearchResponse response = client.prepareSearch().addFields(prefix+".logMessage", prefix+".date").setSearchType(SearchType.DFS_QUERY_THEN_FETCH).setFilter(FilterBuilders.rangeFilter("date").from(from).to(to))
+.setQuery(QueryBuilders.matchPhraseQuery("logMessage", "Received ScriptInformationEvent for ExecBlock")).setFrom(0).setSize(10000).execute().actionGet();
         
             long hits = response.getHits().totalHits(); //number of results
             long day;
             String message, timestamp;
-         
-            
+    
             for(int i = 0; i<hits ; i++){
                          
-               day = response.getHits().getAt(i).field("@fields.date").getValue();  
+               day = response.getHits().getAt(i).field(prefix+".date").getValue();  
                timestamp = this.getTimestamp(day);
-               message = response.getHits().getAt(i).field("@fields.logMessage").getValue();
+               message = response.getHits().getAt(i).field(prefix+".logMessage").getValue();
                
                if(message.contains("uid")&&!message.contains("'/X00/X00'")){
                     finalresult.add(timestamp+" "+message);
@@ -204,9 +207,50 @@ public class LogExtracter {
                         //MMEX START
                         
                         
+                        //SBEX START
+                        SearchResponse response3 = client.prepareSearch().addFields(prefix+".logMessage", prefix+".date").setSearchType(SearchType.DFS_QUERY_THEN_FETCH).setFilter(FilterBuilders.rangeFilter("date").from(from).to(to))
+.setQuery(QueryBuilders.matchPhraseQuery("logMessage", "Created new SBEX")).setFrom(0).setSize(10000).execute().actionGet();
+
+      long hits3 = response3.getHits().totalHits(); 
+      long day3, from3, day4;
+      String message3,timestamp3;
+     
+                         for(int i = 0; i<hits3 ; i++){
+                         
+           day3 = response3.getHits().getAt(i).field(prefix+".date").getValue();
+           day3 = day3 - 1;
+           from3 = day3 - 1000; //1 second before
+           
+          SearchResponse response4 = client.prepareSearch().addFields(prefix+".logMessage", prefix+".date", prefix+".sourceObject").setSearchType(SearchType.DFS_QUERY_THEN_FETCH).setFilter(FilterBuilders.rangeFilter("date").from(from3).to(day3))
+.setQuery(QueryBuilders.matchPhraseQuery("sourceObject", "OBOPS_SCHEDULING_EVENT_LISTENER")).setFrom(0).setSize(10000).execute().actionGet();
+long hits4 = response4.getHits().totalHits();
+if(hits4>0){
+                              day4 = response4.getHits().getAt(0).field(prefix+".date").getValue();
+                              timestamp3 = this.getTimestamp(day4);
+                              message3 = response4.getHits().getAt(0).field(prefix+".logMessage").getValue();
+                              line2 = message3.split(" ");
+                              if(line2.length>6){
+                              if(line2[6].equalsIgnoreCase("started")){
+                                 SBEX = timestamp3+" "+line2[4].replace("'", "").replace(",", "")+" SBEX";    
+                                  iniTime.add(SBEX);
+                              }
+                              }
+} 
+                                
+                        }
+                              
+                              
+                        //SBEX START
                         
-                        SearchResponse response2 = client.prepareSearch().addFields("@fields.logMessage", "@fields.date").setSearchType(SearchType.DFS_QUERY_THEN_FETCH)
-.setQuery(QueryBuilders.matchPhraseQuery("logMessage", "which ended with status")).setFilter(FilterBuilders.rangeFilter("date").from(from).to(to)).setFrom(0).setSize(10000).execute().actionGet();
+                        
+                        
+                        
+                        
+                        
+                        
+                        //END
+                        SearchResponse response2 = client.prepareSearch().addFields(prefix+".logMessage", prefix+".date").setSearchType(SearchType.DFS_QUERY_THEN_FETCH).setFilter(FilterBuilders.rangeFilter("date").from(from).to(to))
+.setQuery(QueryBuilders.matchPhraseQuery("logMessage", "which ended with status")).setFrom(0).setSize(10000).execute().actionGet();
 
                         long hits2 = response2.getHits().totalHits(); //number of results
                         long day2;
@@ -215,9 +259,9 @@ public class LogExtracter {
                         
                         for(int i = 0; i<hits2 ; i++){
                          
-                               day2 = response2.getHits().getAt(i).field("@fields.date").getValue();  
+                               day2 = response2.getHits().getAt(i).field(prefix+".date").getValue();  
                                timestamp2 = this.getTimestamp(day2);
-                               message2 = response2.getHits().getAt(i).field("@fields.logMessage").getValue();
+                               message2 = response2.getHits().getAt(i).field(prefix+".logMessage").getValue();
                
               
                                finalresult2.add(timestamp2+" "+message2);
@@ -230,39 +274,7 @@ public class LogExtracter {
                                END = line2[0]+" "+line2[5].replace("'", "").replace(",", "");
                                finTime.add(END);                        
                         }
-                        
-                        
-                        
-                        /*
-                        
-                        if(line.contains(pattern4)){  //SBEX start
-                          
-                          if(line_anterior.contains(pattern5) && line_anterior.contains(pattern2)){
-                             
-                              line2 = line_anterior.split(" ");
-                              SBEX = line2[18].substring(0,19)+" "+line2[14].replace("'", "").replace(",", "")+" SBEX";    
-                              iniTime.add(SBEX);
-                              
-                             // System.out.println(SBEX);
-                          }
-                          else if(line_anterior2.contains(pattern5) && line_anterior2.contains(pattern2)){
-                            
-                              line2 = line_anterior2.split(" ");
-                              SBEX = line2[18].substring(0,19)+" "+line2[14].replace("'", "").replace(",", "")+" SBEX";
-                              iniTime.add(SBEX);
-                              
-                              //System.out.println(SBEX);
-                          }
-                          
-                          
-                      }
-                     */ 
-                      
-             /*                          
-                 line_anterior2=line_anterior;
-                 line_anterior = line;  
-               */         
-
+                        //END
              
           Collections.sort(iniTime);
           Collections.sort(finTime);   
@@ -281,7 +293,7 @@ public class LogExtracter {
               } 
         } 
  
- 
+         
         
          // join START and END Observations
          return obs;
@@ -297,7 +309,7 @@ public class LogExtracter {
          
              Date date=new Date(milliseconds);
              SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-             sdf.setTimeZone(TimeZone.getTimeZone("GMT"));
+             sdf.setTimeZone(TimeZone.getTimeZone("GMT-3")); //GMT for ariadne
              String s = sdf.format(date);
              String timestamp = s.replace(" ", "T");
              
@@ -316,7 +328,7 @@ public class LogExtracter {
              date = date.replace("-", "/");
              Date newdate = new Date(date);
             
-             long l = newdate.getTime()-10800000L; //3 hours less
+             long l = newdate.getTime()/*-10800000L*/; //3 hours less (for ariadne)
              
              return l;
        }
