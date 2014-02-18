@@ -23,12 +23,12 @@ public class GChart extends ApplicationFrame {
     
   private JFreeChart ch;
 
-  public GChart(String title, String Timestamp[], String Bars[], double[][] data) throws IOException {
+  public GChart(String title, String Timestamp[], String Bars[], double[][] data, String domain, String range) throws IOException {
   super(title);
 
   final CategoryDataset dataset = DatasetUtilities.createCategoryDataset(Bars, Timestamp, data);
   
-  final JFreeChart chart = createChart(dataset,title);
+  final JFreeChart chart = createChart(dataset,title, domain, range);
   
   ch = chart;
 
@@ -44,7 +44,7 @@ public class GChart extends ApplicationFrame {
    axis.setCategoryMargin(0.0);
    BarRenderer renderer = (BarRenderer) plot.getRenderer();
    renderer.setItemMargin(0.0);
-   axis.setTickLabelFont(new Font("",Font.BOLD, 12));
+   axis.setTickLabelFont(new Font("",Font.BOLD, 10));
    axis.setTickLabelPaint(Color.white);
    axis.setLabelPaint(Color.white);
    
@@ -75,12 +75,12 @@ public class GChart extends ApplicationFrame {
 
  
 
-  private JFreeChart createChart(final CategoryDataset dataset, String title) {
+  private JFreeChart createChart(final CategoryDataset dataset, String title, String domain, String range) {
 
   final JFreeChart chart = ChartFactory.createBarChart(          
           title,
-          "Hours", 
-          "MBytes", 
+          domain, 
+          range, 
           dataset,
           PlotOrientation.VERTICAL, 
           true, //incude legends

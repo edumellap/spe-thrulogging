@@ -11,7 +11,6 @@
 package log;
 
 import java.awt.Color;
-import java.awt.Font;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.text.ParseException;
@@ -30,19 +29,33 @@ import org.elasticsearch.common.transport.InetSocketTransportAddress;
  */
 public class FirstFrame extends javax.swing.JFrame {
 
+    
+    private String cDate; //The current date
+    
+    
     /** Creates new form FirstFrame */
-    public FirstFrame() {
+    public FirstFrame() throws IOException {
+        
         initComponents();
-        this.setLocationRelativeTo(null);
+        
+        this.setLocationRelativeTo(null);       //to set the frame in center of the screen
+        
         LogExtracter le = new LogExtracter();
+        
         Date date=new Date();
         String currentDate = le.getTimestamp(date.getTime()).substring(0, 10);
+        cDate = currentDate;
+        
         jTextField1.setText("ariadne.osf.alma.cl");//host name       
         jTextField2.setText("15040"); //Port
         jTextField3.setText(currentDate); //Initial date
         jPanel1.setBackground(new Color(204,204,255));
-        choice1.add("MB/Hours");
         
+        choice1.add("MB/Hours");    //List of indicators
+        choice1.add("MB/Minutes");
+        
+        
+       
     }
 
     /** This method is called from within the constructor to
@@ -109,12 +122,12 @@ public class FirstFrame extends javax.swing.JFrame {
                             .addComponent(jLabel5))
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(jTextField1, javax.swing.GroupLayout.PREFERRED_SIZE, 180, javax.swing.GroupLayout.PREFERRED_SIZE)
                             .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING, false)
                                 .addComponent(jTextField3, javax.swing.GroupLayout.Alignment.LEADING)
                                 .addComponent(jTextField2, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, 81, Short.MAX_VALUE)
                                 .addComponent(jButton1, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                            .addComponent(choice1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))))
+                            .addComponent(choice1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(jTextField1, javax.swing.GroupLayout.PREFERRED_SIZE, 180, javax.swing.GroupLayout.PREFERRED_SIZE))))
                 .addContainerGap(67, Short.MAX_VALUE))
         );
         jPanel1Layout.setVerticalGroup(
@@ -138,7 +151,7 @@ public class FirstFrame extends javax.swing.JFrame {
                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(jLabel5)
                     .addComponent(choice1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 63, Short.MAX_VALUE)
+                .addGap(18, 18, 18)
                 .addComponent(jButton1)
                 .addContainerGap())
         );
@@ -151,7 +164,7 @@ public class FirstFrame extends javax.swing.JFrame {
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(jPanel1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+            .addComponent(jPanel1, javax.swing.GroupLayout.DEFAULT_SIZE, 300, Short.MAX_VALUE)
         );
 
         pack();
@@ -159,21 +172,31 @@ public class FirstFrame extends javax.swing.JFrame {
 
 private void jButton1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton1ActionPerformed
 // TODO add your handling code here:
-    List<String> finalresult = new ArrayList<String>();
+            List<String> finalresult = new ArrayList<String>();
              
             LogExtracter le = new LogExtracter();
-            String host = jTextField1.getText();
-            int port=Integer.parseInt(jTextField2.getText());
             
+            //get the data entered on the fields
+            String host = jTextField1.getText();
+            int port = Integer.parseInt(jTextField2.getText());
+            String currentDate = cDate;
             
             Client client = new TransportClient().addTransportAddress(new InetSocketTransportAddress(host, port));
             
-            String currentDate = jTextField3.getText();
+            //This verifies if the data entered is valid, if not the date is set to today's date
+            if(jTextField3.getText().matches("^((19|20|21)\\d\\d)-(0[1-9]|1[012])-(0[1-9]|[12][0-9]|3[01])$")){
+                currentDate = jTextField3.getText();
+            }
             
+            
+            int ind = 0; //MB/Hours
+            if(choice1.getSelectedItem().equalsIgnoreCase("MB/Minutes")){
+                 ind=1; //MB/Minutes
+            }
             
             
         try {
-            finalresult = le.getDataStored("Successfully stored", currentDate, client);
+            finalresult = le.getDataStored("Successfully stored", currentDate, client, ind);
         } catch (FileNotFoundException ex) {
             Logger.getLogger(FirstFrame.class.getName()).log(Level.SEVERE, null, ex);
         } catch (IOException ex) {
@@ -181,7 +204,13 @@ private void jButton1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRS
         }
          
         
-            Frame f = new Frame(client, host, port, this);
+            Frame f = null;
+            
+        try {
+            f = new Frame(client, host, port, this, ind);
+        } catch (IOException ex) {
+            Logger.getLogger(FirstFrame.class.getName()).log(Level.SEVERE, null, ex);
+        }
             
         try {
             f.setGraph(finalresult);
@@ -193,7 +222,7 @@ private void jButton1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRS
             Logger.getLogger(FirstFrame.class.getName()).log(Level.SEVERE, null, ex);
         }
             f.setVisible(true);//Plot the data
-    this.setVisible(false);
+             this.setVisible(false);
 }//GEN-LAST:event_jButton1ActionPerformed
 
 private void jTextField3ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jTextField3ActionPerformed
@@ -232,8 +261,13 @@ private void jTextField3ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-F
         /* Create and display the form */
         java.awt.EventQueue.invokeLater(new Runnable() {
 
+            @Override
             public void run() {
-                new FirstFrame().setVisible(true);
+                try {
+                    new FirstFrame().setVisible(true);
+                } catch (IOException ex) {
+                    Logger.getLogger(FirstFrame.class.getName()).log(Level.SEVERE, null, ex);
+                }
             }
         });
     }
