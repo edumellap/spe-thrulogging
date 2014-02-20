@@ -6,7 +6,7 @@ public class App {
   
 	public static void main(String[] args) throws IOException {
 
-            FirstFrame ff = new FirstFrame();
+            Menu ff = new Menu();
             ff.setVisible(true);  //the main menu
            
         }

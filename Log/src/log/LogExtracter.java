@@ -6,6 +6,12 @@ package log;
 
 
 
+import com.mongodb.BasicDBObject;
+import com.mongodb.DB;
+import com.mongodb.DBCollection;
+import com.mongodb.DBCursor;
+import com.mongodb.DBObject;
+import com.mongodb.MongoClient;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
@@ -26,10 +32,10 @@ import org.elasticsearch.index.query.QueryBuilders;
  */
 public class LogExtracter {
            
-      private String prefix = "@fields"; //this prefix varies depending of the DB tha app connect to. With a newer version
+      private String prefix = "_source"; //this prefix varies depending of the DB tha app connect to. With a newer version
                                         //of alogging2mq this should be "_source", and  with an odler version "@field"
     
-    public List<String> getDataStored(String pattern, String date, Client client, int indicator) throws FileNotFoundException, IOException{
+    public List<String> getDataStored(String date, Client esClient, MongoClient mongoClient, int indicator) throws FileNotFoundException, IOException{
             
         //indicator = 0 means, MB/Hours
         //indicator = 1,2,3,4,5,6 means, MB/min
@@ -39,7 +45,6 @@ public class LogExtracter {
             String timestamp="0"; //variable which has the timestamp
             float value = 0; //variable which stores the amount of data tranfered
             List<String> result = new ArrayList<String>();  //final array that has each timestamp value 
-            List<String> result2 = new ArrayList<String>(); //final array that has the value of the data flow of each timestamp                   
             String data[];
             String bytes;
             String message, ts = null;
@@ -57,8 +62,49 @@ public class LogExtracter {
                 to = from + 14400000L; //next day
             }
 
-      SearchResponse response = client.prepareSearch().addFields(prefix+".logMessage", prefix+".date").setSearchType(SearchType.DFS_QUERY_THEN_FETCH).setFilter(FilterBuilders.rangeFilter("date").from(from).to(to))
-.setQuery(QueryBuilders.matchPhraseQuery("logMessage", pattern)).setFrom(0).setSize(10000).execute().actionGet();
+            if(esClient==null){
+                
+                long day;
+                
+                DB db = mongoClient.getDB( "almalogs" );        
+                DBCollection coll = db.getCollection("almalogs");
+
+                BasicDBObject query = new BasicDBObject();
+                query.put("logMessage", java.util.regex.Pattern.compile("Successfully stored"));
+                query.put("date", new BasicDBObject("$gte", from).append("$lt", to));
+        
+                DBCursor cursor = coll.find(query);
+                DBObject ob = new BasicDBObject();
+       
+                while(cursor.hasNext()) {
+                     ob = cursor.next();
+                     
+                     message = ob.get("logMessage").toString();
+                     day = Long.parseLong(ob.get("date").toString());
+              
+                     if(indicator==0){
+                           ts = this.getTimestamp(day).substring(0, 13);
+                     }
+                     else if(indicator!=0){
+                           ts = this.getTimestamp(day).substring(0, 15);
+                     }
+                     data = message.split(" ");             
+                     bytes = data[8];
+              
+                     float mb = (Float.parseFloat(bytes))/1048576;
+                     bytes = Float.toString(mb);
+              
+                     if(data[0].equals("FLOW")){
+                            datalist.add(ts+" "+bytes);
+                     }    
+                   
+                 }
+            }
+            
+            else if(mongoClient==null){
+                
+      SearchResponse response = esClient.prepareSearch().addFields(prefix+".logMessage", prefix+".date").setSearchType(SearchType.DFS_QUERY_THEN_FETCH).setFilter(FilterBuilders.rangeFilter("date").from(from).to(to))
+.setQuery(QueryBuilders.matchPhraseQuery("logMessage", "Successfully stored")).setFrom(0).setSize(10000).execute().actionGet();
             
  
             
@@ -91,6 +137,9 @@ public class LogExtracter {
                 datalist.add(ts+" "+bytes);
               }        
             }
+            
+            
+    }
             
             Collections.sort(datalist);
             int datasize = datalist.size();
@@ -238,21 +287,13 @@ public class LogExtracter {
            return result;
         }
     
-    public List<String> getObservationTime(String date, Client client, int indicator) throws FileNotFoundException, IOException{
+    public List<String> getObservationTime(String date, Client esClient, MongoClient mongoClient, int indicator) throws FileNotFoundException, IOException{
              
-            String line = null; 
-            String pattern1 = "Received ScriptInformationEvent for ExecBlock"; //pattern to look over the log
-            String pattern2= "uid";
-            String pattern3 = "/X00/X00";
+            String line = null;          
             String line2[]; //array that has each 'word' of a single line    
             String MMEX, SBEX, END, last;
             List<String> iniTime = new ArrayList<String>();  //final array that has each timestamp value 
             List<String> finTime = new ArrayList<String>(); //final array that has the value of the data flow of each timestamp
-            String pattern4 = "Created new SBEX";
-            String pattern5 = "OBOPS_SCHEDULING_EVENT_LISTENER";
-            String endpattern = "which ended with status";
-            String line_anterior="nada";
-            String line_anterior2="vacio";
             String start[], end[];
             List<String> obs = new ArrayList<String>();  //final array that has each timestamp value
             List<String> finalresult = new ArrayList<String>();
@@ -271,7 +312,33 @@ public class LogExtracter {
                 to = from + 14400000L; //next day
             }
             
-            SearchResponse response = client.prepareSearch().addFields(prefix+".logMessage", prefix+".date").setSearchType(SearchType.DFS_QUERY_THEN_FETCH).setFilter(FilterBuilders.rangeFilter("date").from(from).to(to))
+            if(esClient==null){
+                long day;
+                String message, timestamp;
+                DB db = mongoClient.getDB( "almalogs" );        
+                DBCollection coll = db.getCollection("almalogs");
+
+                BasicDBObject query = new BasicDBObject();
+                query.put("logMessage", java.util.regex.Pattern.compile("Received ScriptInformationEvent for ExecBlock"));
+                query.put("date", new BasicDBObject("$gte", from).append("$lt", to));
+        
+                DBCursor cursor = coll.find(query);
+                DBObject ob = new BasicDBObject();
+       
+                while(cursor.hasNext()) {
+                      ob = cursor.next();
+                      message = ob.get("logMessage").toString();
+                      day = Long.parseLong(ob.get("date").toString());
+                      timestamp=this.getTimestamp(day);
+                      if(message.contains("uid")&&!message.contains("'/X00/X00'")){
+                         finalresult.add(timestamp+" "+message);
+               
+                      }
+                }
+            }
+            
+            else if(mongoClient==null){
+            SearchResponse response = esClient.prepareSearch().addFields(prefix+".logMessage", prefix+".date").setSearchType(SearchType.DFS_QUERY_THEN_FETCH).setFilter(FilterBuilders.rangeFilter("date").from(from).to(to))
 .setQuery(QueryBuilders.matchPhraseQuery("logMessage", "Received ScriptInformationEvent for ExecBlock")).setFrom(0).setSize(10000).execute().actionGet();
         
             long hits = response.getHits().totalHits(); //number of results
@@ -291,7 +358,7 @@ public class LogExtracter {
                
             
             }
-                 
+            }   
                                                                                                     
                         //MMEX START
                         for(int i = 0; i<finalresult.size();i++){
@@ -303,8 +370,59 @@ public class LogExtracter {
                         //MMEX START
                         
                         
+                        
+                        
+                        
                         //SBEX START
-                        SearchResponse response3 = client.prepareSearch().addFields(prefix+".logMessage", prefix+".date").setSearchType(SearchType.DFS_QUERY_THEN_FETCH).setFilter(FilterBuilders.rangeFilter("date").from(from).to(to))
+                        
+                        if(esClient==null){
+                             
+                              long day3, from3, day4;
+                              String message3,timestamp3;
+                              
+                              DB db2 = mongoClient.getDB( "almalogs" );        
+                              DBCollection coll2 = db2.getCollection("almalogs");
+
+                              BasicDBObject query2 = new BasicDBObject();
+                              query2.put("logMessage", java.util.regex.Pattern.compile("Created new SBEX"));
+                              query2.put("date", new BasicDBObject("$gte", from).append("$lt", to));
+        
+                              DBCursor cursor2 = coll2.find(query2);
+                              DBObject ob2 = new BasicDBObject();
+       
+                              while(cursor2.hasNext()) {
+                                  
+                                  ob2 = cursor2.next();
+                                  day3 = Long.parseLong(ob2.get("date").toString());
+                                  day3 = day3 - 1;
+                                  from3 = day3 - 1000; //1 second before
+                                  
+                                  
+                                  BasicDBObject query3 = new BasicDBObject();
+                                  query3.put("sourceObject", java.util.regex.Pattern.compile("OBOPS_SCHEDULING_EVENT_LISTENER"));
+                                  query3.put("date", new BasicDBObject("$gte", from3).append("$lt", day3));
+                                  DBCursor cursor3 = coll2.find(query3);
+                                  DBObject ob3 = new BasicDBObject();
+                                  
+                                 
+                                  if(cursor3.size()>0){
+                                         ob3 = cursor3.next();
+                                         day4 = Long.parseLong(ob3.get("date").toString());
+                                         timestamp3 = this.getTimestamp(day4);
+                                         message3 = ob3.get("logMessage").toString();
+                                         line2 = message3.split(" ");
+                                         if(line2.length>6){
+                                                if(line2[6].equalsIgnoreCase("started")){
+                                                      SBEX = timestamp3+" "+line2[4].replace("'", "").replace(",", "")+" SBEX";    
+                                                      iniTime.add(SBEX);
+                                                }
+                                         }
+                                 } 
+                              }
+                         }
+                        
+                        else if(mongoClient==null){
+                        SearchResponse response3 = esClient.prepareSearch().addFields(prefix+".logMessage", prefix+".date").setSearchType(SearchType.DFS_QUERY_THEN_FETCH).setFilter(FilterBuilders.rangeFilter("date").from(from).to(to))
 .setQuery(QueryBuilders.matchPhraseQuery("logMessage", "Created new SBEX")).setFrom(0).setSize(10000).execute().actionGet();
 
       long hits3 = response3.getHits().totalHits(); 
@@ -317,7 +435,7 @@ public class LogExtracter {
            day3 = day3 - 1;
            from3 = day3 - 1000; //1 second before
            
-          SearchResponse response4 = client.prepareSearch().addFields(prefix+".logMessage", prefix+".date", prefix+".sourceObject").setSearchType(SearchType.DFS_QUERY_THEN_FETCH).setFilter(FilterBuilders.rangeFilter("date").from(from3).to(day3))
+          SearchResponse response4 = esClient.prepareSearch().addFields(prefix+".logMessage", prefix+".date", prefix+".sourceObject").setSearchType(SearchType.DFS_QUERY_THEN_FETCH).setFilter(FilterBuilders.rangeFilter("date").from(from3).to(day3))
 .setQuery(QueryBuilders.matchPhraseQuery("sourceObject", "OBOPS_SCHEDULING_EVENT_LISTENER")).setFrom(0).setSize(10000).execute().actionGet();
 long hits4 = response4.getHits().totalHits();
 if(hits4>0){
@@ -335,7 +453,7 @@ if(hits4>0){
                                 
                         }
                               
-                              
+    }     
                         //SBEX START
                         
                         
@@ -345,13 +463,41 @@ if(hits4>0){
                         
                         
                         //END
-                        SearchResponse response2 = client.prepareSearch().addFields(prefix+".logMessage", prefix+".date").setSearchType(SearchType.DFS_QUERY_THEN_FETCH).setFilter(FilterBuilders.rangeFilter("date").from(from).to(to))
+                        List<String> finalresult2 = new ArrayList<String>();
+                        
+                        if(esClient==null){
+                            long day2;
+                        String message2, timestamp2;
+                       
+                             DB db3 = mongoClient.getDB( "almalogs" );        
+                             DBCollection coll3 = db3.getCollection("almalogs");
+
+                             BasicDBObject query4 = new BasicDBObject();
+                             query4.put("logMessage", java.util.regex.Pattern.compile("which ended with status"));
+                             query4.put("date", new BasicDBObject("$gte", from).append("$lt", to));
+        
+                             DBCursor cursor4 = coll3.find(query4);
+                             DBObject ob4 = new BasicDBObject();
+       
+                              while(cursor4.hasNext()) {
+                                 ob4 = cursor4.next();
+                                 day2 = Long.parseLong(ob4.get("date").toString());  
+                                 timestamp2 = this.getTimestamp(day2);
+                                 message2 = ob4.get("logMessage").toString();
+                           
+                                finalresult2.add(timestamp2+" "+message2);
+                                
+                              }
+                        }
+                        
+                       else if(mongoClient==null){
+                        SearchResponse response2 = esClient.prepareSearch().addFields(prefix+".logMessage", prefix+".date").setSearchType(SearchType.DFS_QUERY_THEN_FETCH).setFilter(FilterBuilders.rangeFilter("date").from(from).to(to))
 .setQuery(QueryBuilders.matchPhraseQuery("logMessage", "which ended with status")).setFrom(0).setSize(10000).execute().actionGet();
 
                         long hits2 = response2.getHits().totalHits(); //number of results
                         long day2;
                         String message2, timestamp2;
-                        List<String> finalresult2 = new ArrayList<String>();
+                        
                         
                         for(int i = 0; i<hits2 ; i++){
                          
@@ -363,6 +509,8 @@ if(hits4>0){
                                finalresult2.add(timestamp2+" "+message2);
 
                         }
+    }
+                        
                         
                         for(int i=0;i<finalresult2.size();i++){
                                line = finalresult2.get(i);
