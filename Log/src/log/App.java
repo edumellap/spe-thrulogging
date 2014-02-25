@@ -1,3 +1,4 @@
+
 package log;
 
 import java.io.IOException;
@@ -5,10 +6,10 @@ import java.io.IOException;
 public class App {
   
 	public static void main(String[] args) throws IOException {
-
-            Menu ff = new Menu();
-            ff.setVisible(true);  //the main menu
-           
+ 
+            Menu menu = new Menu();
+            menu.setVisible(true);  //the main menu
+          
         }
       
  }

@@ -10,15 +10,13 @@
  */
 package log;
 
-import com.mongodb.DB;
-import com.mongodb.DBCollection;
+
 import com.mongodb.MongoClient;
 import java.awt.Color;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.net.UnknownHostException;
 import java.text.ParseException;
-import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.logging.Level;
@@ -44,7 +42,7 @@ public class Menu extends javax.swing.JFrame {
         
         this.setLocationRelativeTo(null);       //to set the frame in center of the screen
         
-        LogExtracter le = new LogExtracter();
+        LogExtractor le = new LogExtractor();
         
         Date date=new Date();
         String currentDate = le.getTimestamp(date.getTime()).substring(0, 10);
@@ -57,13 +55,57 @@ public class Menu extends javax.swing.JFrame {
         
         choice1.add("MB/Hours");    //List of indicators
         choice1.add("MB/Minutes");
-        choice2.add("MongoDB");
+        
+        choice2.add("MongoDB"); //List of DB
         choice2.add("ES");
         
         
        
     }
 
+    
+    private void showGraph() throws UnknownHostException, FileNotFoundException, IOException, ParseException{
+                   
+            LogExtractor le = new LogExtractor();
+            
+            //get the data entered on the fields
+            String host = jTextField1.getText();
+            int port = Integer.parseInt(jTextField2.getText());
+            String currentDate = cDate;
+            int db = choice2.getSelectedIndex(); //0=MongoDB, 1=ES
+            Client esClient = null;
+            MongoClient mongoClient = null;
+            
+            if(db==1){
+                 esClient = new TransportClient().addTransportAddress(new InetSocketTransportAddress(host, port));
+            }
+            
+            else if(db==0){         
+                mongoClient = new MongoClient( host , port );     
+            }
+            
+            
+            //This verifies if the data entered is valid, if not the date is set to today's date
+            if(jTextField3.getText().matches("^((19|20|21)\\d\\d)-(0[1-9]|1[012])-(0[1-9]|[12][0-9]|3[01])$")){
+                currentDate = jTextField3.getText();
+            }
+            
+            
+            int ind = 0; //MB/Hours
+            if(choice1.getSelectedItem().equalsIgnoreCase("MB/Minutes")){
+                 ind=1; //MB/Minutes
+            }
+ 
+            
+            List<String> finalresult = le.getDataStored(currentDate, esClient, mongoClient, ind);
+ 
+            Frame f = new Frame(esClient, mongoClient, host, port, this, ind);
+            f.setGraph(finalresult);
+            f.setVisible(true);//Plot the data
+            this.setVisible(false);
+            
+    }
+    
     /** This method is called from within the constructor to
      * initialize the form.
      * WARNING: Do NOT modify this code. The content of this method is
@@ -103,12 +145,6 @@ public class Menu extends javax.swing.JFrame {
         jLabel3.setText("Port Number:");
 
         jLabel4.setText("Date:");
-
-        jTextField3.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                jTextField3ActionPerformed(evt);
-            }
-        });
 
         jLabel5.setText("Indicator:");
 
@@ -187,85 +223,29 @@ public class Menu extends javax.swing.JFrame {
     }// </editor-fold>//GEN-END:initComponents
 
 private void jButton1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton1ActionPerformed
-// TODO add your handling code here:
-            List<String> finalresult = new ArrayList<String>();
-             
-            LogExtracter le = new LogExtracter();
-            
-            //get the data entered on the fields
-            String host = jTextField1.getText();
-            int port = Integer.parseInt(jTextField2.getText());
-            String currentDate = cDate;
-            int db = choice2.getSelectedIndex(); //0=MongoDB, 1=ES
-            Client esClient = null;
-            MongoClient mongoClient = null;
-            
-            if(db==1){
-                 esClient = new TransportClient().addTransportAddress(new InetSocketTransportAddress(host, port));
-            }
-            
-            else if(db==0){
-    
-            try {
-              
-                mongoClient = new MongoClient( host , port );
-        
-            } catch (UnknownHostException ex) {
-                Logger.getLogger(Menu.class.getName()).log(Level.SEVERE, null, ex);
-            }
-               
-            }
-            
-            
-            
-            
-            //This verifies if the data entered is valid, if not the date is set to today's date
-            if(jTextField3.getText().matches("^((19|20|21)\\d\\d)-(0[1-9]|1[012])-(0[1-9]|[12][0-9]|3[01])$")){
-                currentDate = jTextField3.getText();
-            }
-            
-            
-            int ind = 0; //MB/Hours
-            if(choice1.getSelectedItem().equalsIgnoreCase("MB/Minutes")){
-                 ind=1; //MB/Minutes
-            }
-            
-            
         try {
-            finalresult = le.getDataStored(currentDate, esClient, mongoClient, ind);
+            // "Continue" button
+
+            
+                     this.showGraph();
+                     
+                     
+                     
+        } catch (UnknownHostException ex) {
+            Logger.getLogger(Menu.class.getName()).log(Level.SEVERE, null, ex);
         } catch (FileNotFoundException ex) {
             Logger.getLogger(Menu.class.getName()).log(Level.SEVERE, null, ex);
         } catch (IOException ex) {
             Logger.getLogger(Menu.class.getName()).log(Level.SEVERE, null, ex);
-        }
-         
-        
-            Frame f = null;
-        try {
-            f = new Frame(esClient, mongoClient, host, port, this, ind);
-        } catch (IOException ex) {
-            Logger.getLogger(Menu.class.getName()).log(Level.SEVERE, null, ex);
-        }
-       
-            
-        try {
-            f.setGraph(finalresult);
         } catch (ParseException ex) {
             Logger.getLogger(Menu.class.getName()).log(Level.SEVERE, null, ex);
-        } catch (FileNotFoundException ex) {
-            Logger.getLogger(Menu.class.getName()).log(Level.SEVERE, null, ex);
-        } catch (IOException ex) {
-            Logger.getLogger(Menu.class.getName()).log(Level.SEVERE, null, ex);
         }
-            f.setVisible(true);//Plot the data
-             this.setVisible(false);
+                
+                
+                
+      
+           
 }//GEN-LAST:event_jButton1ActionPerformed
-
-private void jTextField3ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jTextField3ActionPerformed
-// TODO add your handling code here:
-    
-    
-}//GEN-LAST:event_jTextField3ActionPerformed
 
     /**
      * @param args the command line arguments
@@ -295,10 +275,12 @@ private void jTextField3ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-F
         //</editor-fold>
 
         /* Create and display the form */
-        java.awt.EventQueue.invokeLater(new Runnable() {
+        java.awt.EventQueue.invokeLater(new Runnable(){
 
             @Override
-            public void run() {
+            public void run()  {
+           
+                
                 try {
                     new Menu().setVisible(true);
                 } catch (IOException ex) {

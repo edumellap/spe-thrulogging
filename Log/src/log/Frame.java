@@ -64,26 +64,29 @@ public class Frame extends javax.swing.JFrame {
     
     public Frame(Client esClient, MongoClient mongoClient, String host, int port, Menu ff, int indicator) throws IOException {
         initComponents();
-        setLocationRelativeTo(null);
+        
+        setLocationRelativeTo(null); //to center the frame on the screen
+        
         this.esClient = esClient;
         this.mongoClient = mongoClient;
         this.host = host;
         this.port = port;
         this.ini = ff;
         this.indicator = indicator;
-        jLabel2.setText(null);
-        jLabel3.setText(null);
+        
+        jLabel2.setText(null); // These are the button needed when the MBytes/Minutes indicator is selected
+        jLabel3.setText(null); //
         choice2.insert("Indicator", 0);
         choice2.insert("MB/Hours", 1);
         choice2.insert("MB/Minutes", 2);
-        if(this.indicator != 0 ){
+        
+        
+        if(this.indicator>0 && this.indicator<7){
                  BufferedImage myPicture = ImageIO.read(new File("image/rightarrow.png"));     
                  jLabel2.setIcon(new ImageIcon(myPicture));
                  
                  BufferedImage myPicture2 = ImageIO.read(new File("image/leftarrow.png"));
-                 jLabel3.setIcon(new ImageIcon(myPicture2));
-                 
-                 
+                 jLabel3.setIcon(new ImageIcon(myPicture2));                                
         }
     }
     
@@ -93,12 +96,11 @@ public class Frame extends javax.swing.JFrame {
         
         List<String> finalresult = new ArrayList<String>(); 
    
-        LogExtracter le = new LogExtracter();
-       
-        
+        LogExtractor le = new LogExtractor();
+              
         finalresult = le.getDataStored(date, this.esClient, this.mongoClient, indicator);
         
-        this.jPanel1.remove(17); //remove the chart. The number can change, it depends of the components of the panel
+        this.jPanel1.remove(17); //remove the chart. The number can change, it depends of the number of components on the panel
 
         this.setGraph(finalresult); //set a new graph to the panel with the new data of the selected date
       
@@ -116,7 +118,7 @@ public class Frame extends javax.swing.JFrame {
         List<String> finalresult2 = new ArrayList<String>();
        
 
-        LogExtracter le = new LogExtracter();
+        LogExtractor le = new LogExtractor();
       
         
         finalresult = le.getDataStored(date, this.esClient, this.mongoClient, indicator);
@@ -228,13 +230,14 @@ public class Frame extends javax.swing.JFrame {
                   domain = "Hours";
                  range = "MBytes";
               }
-              else if(indicator!=0){
+              else if(indicator>0 && indicator<7){
                   T[i] = finalresult.get(i).substring(11, 15);                          
                   data[0][i] = Double.parseDouble(finalresult.get(i).substring(16));
                   domain = "Minutes";
                  range = "MBytes";
               }
          }
+         
         
         final GChart chart = new GChart("Bulk System Analisys", T, S, data, domain, range);
         g = chart;       
@@ -269,8 +272,9 @@ public class Frame extends javax.swing.JFrame {
                  data[1][i] = Double.parseDouble(finalresult2.get(i).substring(14));
                  domain = "Hours";
                  range = "MBytes";
+                 
               }
-              else if(indicator!=0){
+              else if(indicator>0 && indicator<7){
                   T[i] = finalresult.get(i).substring(11, 15);
                   data[0][i] = Double.parseDouble(finalresult.get(i).substring(16));            
                   data[1][i] = Double.parseDouble(finalresult2.get(i).substring(16));
@@ -281,7 +285,8 @@ public class Frame extends javax.swing.JFrame {
             
 
          }
-        
+      
+    
         final GChart chart = new GChart("Bulk System Analisys", T, S, data, domain, range);
        g = chart;
         
@@ -380,13 +385,14 @@ public class Frame extends javax.swing.JFrame {
     }
     
     private void setArrow(String i, String e, String u, String o){
+                          //initial, end time,     uid,  observation
        
         String arrow = "";
         String T = null;
         int index = 0, ihour = 0, ehour = 0, imin = 0, emin = 0, start = 0, duration = 0;
         double div = 0;
         
-        if(indicator==0){
+        if(indicator==0 ){
           div = 7.0;
           T = i.substring(11, 13);
           index = Integer.parseInt(T);
@@ -401,7 +407,7 @@ public class Frame extends javax.swing.JFrame {
           T = "T"+T;                               
         }
         
-        else if(indicator!=0){
+        else if(indicator>0 && indicator<7){
           div = 5.8;
           T = i.substring(11, 13)+i.substring(14, 15);
           int t = Integer.parseInt(T);
@@ -532,7 +538,7 @@ public class Frame extends javax.swing.JFrame {
     private List<String> getObservation(String date) throws FileNotFoundException, IOException{
         
      List<String> finalresult2 = new ArrayList<String>();
-     LogExtracter le = new LogExtracter();   
+     LogExtractor le = new LogExtractor();   
      
      finalresult2 = le.getObservationTime(date, this.esClient, this.mongoClient, this.indicator);
      
@@ -542,32 +548,83 @@ public class Frame extends javax.swing.JFrame {
     }
     
     private void clean(){
-          final CategoryPlot plot = g.getChart().getCategoryPlot();
-    
-    plot.clearAnnotations();
-    for(int i=0;i<24;i++){
-        arrows[0][i] = 0;
-        arrows[1][i] = 0;
-        arrows[2][i] = 0;
-        arrows[3][i] = 0;
-        arrows[4][i] = 0;
-        arrows[5][i] = 0;
-        arrows[6][i] = 0;
-        arrows[7][i] = 0;
-        arrows[8][i] = 0;
-        arrows[9][i] = 0;
-    }
+        
+          final CategoryPlot plot = g.getChart().getCategoryPlot();   
+          plot.clearAnnotations();
+          for(int i=0;i<24;i++){
+             for(int j=0;j<10;j++){
+                 arrows[j][i] = 0;     
+             }
+          }
     }
     
-    private void setConnection(int db) throws UnknownHostException{
-        if(db==0){
+    private void reconnect() throws UnknownHostException{
+        
+        if(this.mongoClient!=null){
+            this.mongoClient.close();
             MongoClient newclient = new MongoClient(this.host , this.port); 
             this.mongoClient = newclient;
         }
-        else if(db==1){
-            Client newclient = new TransportClient().addTransportAddress(new InetSocketTransportAddress(host, port));
+        else if(this.esClient!=null){
+            this.esClient.close();
+            Client newclient = new TransportClient().addTransportAddress(new InetSocketTransportAddress(this.host, this.port));
             this.esClient = newclient;
         }
+    }
+    
+    private void reload() throws FileNotFoundException, IOException, ParseException{
+        
+         if(choice2.getSelectedIndex()==1){ //MB/HOURS
+            indicator = 0;        
+            jLabel2.setIcon(null);
+            jLabel3.setIcon(null);
+            this.setNewgraph(currentDate);           
+        }
+        
+        else if(choice2.getSelectedIndex()==2){ //MB/Minutes
+            indicator = 1;
+        
+            BufferedImage myPicture = ImageIO.read(new File("image/rightarrow.png"));               
+            jLabel2.setIcon(new ImageIcon(myPicture));
+                 
+            BufferedImage myPicture2 = ImageIO.read(new File("image/leftarrow.png"));     
+            jLabel3.setIcon(new ImageIcon(myPicture2));
+           
+            this.setNewgraph(currentDate);
+            
+        }
+    
+    }
+    private void setDate() throws FileNotFoundException, IOException, ParseException{
+        
+        String date =  jTextField1.getText();
+    
+        if(date.matches("^((19|20|21)\\d\\d)-(0[1-9]|1[012])-(0[1-9]|[12][0-9]|3[01])$")){     
+             this.setNewgraph(date);
+        }
+   
+    
+        else {
+            jLabel1.setText("Invalid Date");
+            System.out.println("Please enter a valid date, its format should be yyyy-mm-dd (e.g. 2013-01-01), with a range from 1900-01-01 to 2199-12-31");
+        }
+    
+    }
+    
+    private void merge() throws FileNotFoundException, IOException, ParseException{
+        
+       if(jRadioButton1.isSelected()){
+          
+           this.setNewgraph(currentDate, this.getDaybefore(currentDate));
+                
+        }
+       
+       else if(jRadioButton2.isSelected()){
+           
+           this.setNewgraph(currentDate, this.getNextday(currentDate));
+                
+    }
+    
     }
     
     /** This method is called from within the constructor to
@@ -643,12 +700,6 @@ public class Frame extends javax.swing.JFrame {
         jButton5.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 jButton5ActionPerformed(evt);
-            }
-        });
-
-        jTextField1.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                jTextField1ActionPerformed(evt);
             }
         });
 
@@ -829,7 +880,9 @@ private void jButton2ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRS
     
     String date = this.getDaybefore(currentDate);
         try {
+            
             this.setNewgraph(date);
+            
         } catch (FileNotFoundException ex) {
             Logger.getLogger(Frame.class.getName()).log(Level.SEVERE, null, ex);
         } catch (IOException ex) {
@@ -842,36 +895,20 @@ private void jButton2ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRS
 }//GEN-LAST:event_jButton2ActionPerformed
 
 private void jButton3ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton3ActionPerformed
-// "Merge" button
-    
-    if(jRadioButton1.isSelected()){
-            try {
-                try {
-                    this.setNewgraph(currentDate, this.getDaybefore(currentDate));
-                } catch (ParseException ex) {
-                    Logger.getLogger(Frame.class.getName()).log(Level.SEVERE, null, ex);
-                }
-            } catch (FileNotFoundException ex) {
-                Logger.getLogger(Frame.class.getName()).log(Level.SEVERE, null, ex);
-            } catch (IOException ex) {
-                Logger.getLogger(Frame.class.getName()).log(Level.SEVERE, null, ex);
-            }
-    }
-    else if(jRadioButton2.isSelected()){
-            try {
-                try {
-                    this.setNewgraph(currentDate, this.getNextday(currentDate));
-                } catch (ParseException ex) {
-                    Logger.getLogger(Frame.class.getName()).log(Level.SEVERE, null, ex);
-                }
-            } catch (FileNotFoundException ex) {
-                Logger.getLogger(Frame.class.getName()).log(Level.SEVERE, null, ex);
-            } catch (IOException ex) {
-                Logger.getLogger(Frame.class.getName()).log(Level.SEVERE, null, ex);
-            }
-    }
-    
-    
+        try {
+            // "Merge" button
+                
+                
+                this.merge();
+                
+                
+        } catch (FileNotFoundException ex) {
+            Logger.getLogger(Frame.class.getName()).log(Level.SEVERE, null, ex);
+        } catch (IOException ex) {
+            Logger.getLogger(Frame.class.getName()).log(Level.SEVERE, null, ex);
+        } catch (ParseException ex) {
+            Logger.getLogger(Frame.class.getName()).log(Level.SEVERE, null, ex);
+        }
     
     
 }//GEN-LAST:event_jButton3ActionPerformed
@@ -902,18 +939,12 @@ private void jButton5ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRS
 }//GEN-LAST:event_jButton5ActionPerformed
 
 private void jButton6ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton6ActionPerformed
-          // "GO" Button
-    
-    String date =  jTextField1.getText();
-    
-    if(date.matches("^((19|20|21)\\d\\d)-(0[1-9]|1[012])-(0[1-9]|[12][0-9]|3[01])$")){
-
-    try {
-          
-                
-                this.setNewgraph(date);
-                
-                
+        try {
+            // "GO" Button
+      
+        this.setDate();
+      
+      
         } catch (FileNotFoundException ex) {
             Logger.getLogger(Frame.class.getName()).log(Level.SEVERE, null, ex);
         } catch (IOException ex) {
@@ -921,36 +952,24 @@ private void jButton6ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRS
         } catch (ParseException ex) {
             Logger.getLogger(Frame.class.getName()).log(Level.SEVERE, null, ex);
         }
-    }
-   
-    
-    else {
-        jLabel1.setText("Invalid Date");
-        System.out.println("Please enter a valid date, its format should be yyyy-mm-dd (e.g. 2013-01-01), with a range from 1900-01-01 to 2199-12-31");
-    }
-    
     
     
 }//GEN-LAST:event_jButton6ActionPerformed
 
 private void jButton7ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton7ActionPerformed
-// Reconnect button
-    if(this.esClient==null){
-        this.mongoClient.close();
-            try {
-                this.setConnection(0); //0 means MongoDB
-            } catch (UnknownHostException ex) {
-                Logger.getLogger(Frame.class.getName()).log(Level.SEVERE, null, ex);
-            }
-    }
-    else if(this.mongoClient==null){
-        this.esClient.close();
-            try {
-                this.setConnection(1); //1 means ES
-            } catch (UnknownHostException ex) {
-                Logger.getLogger(Frame.class.getName()).log(Level.SEVERE, null, ex);
-            }
-    }
+    // Reconnect button   
+    
+        try {
+            
+                
+                this.reconnect();
+                
+                
+                
+        } catch (UnknownHostException ex) {
+            Logger.getLogger(Frame.class.getName()).log(Level.SEVERE, null, ex);
+        }
+           
 }//GEN-LAST:event_jButton7ActionPerformed
 
 private void jButton8ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton8ActionPerformed
@@ -958,14 +977,11 @@ private void jButton8ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRS
     
     this.dispose();
     ini.setVisible(true);
+    
 }//GEN-LAST:event_jButton8ActionPerformed
 
-private void jTextField1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jTextField1ActionPerformed
-// TODO add your handling code here:
-}//GEN-LAST:event_jTextField1ActionPerformed
-
 private void jLabel2MouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_jLabel2MouseClicked
-// TODO add your handling code here:
+// Move fordward on the minutes
     
     if(indicator==6){
         indicator=1;
@@ -986,7 +1002,8 @@ private void jLabel2MouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:eve
 }//GEN-LAST:event_jLabel2MouseClicked
 
 private void jLabel3MouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_jLabel3MouseClicked
-// TODO add your handling code here:
+// Move backward on the minutes
+    
     if(indicator==1){
         indicator=6;
     }
@@ -994,7 +1011,11 @@ private void jLabel3MouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:eve
         indicator--;
     }
         try {
-            this.setNewgraph(currentDate);
+            
+            
+          this.setNewgraph(currentDate);
+        
+        
         } catch (FileNotFoundException ex) {
             Logger.getLogger(Frame.class.getName()).log(Level.SEVERE, null, ex);
         } catch (IOException ex) {
@@ -1005,50 +1026,20 @@ private void jLabel3MouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:eve
 }//GEN-LAST:event_jLabel3MouseClicked
 
 private void jButton9ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton9ActionPerformed
-// TODO add your handling code here:
-    
-    if(choice2.getSelectedIndex()==1){
-        indicator = 0;        
-        jLabel2.setIcon(null);
-        jLabel3.setIcon(null);
-     
-            try {
-                this.setNewgraph(currentDate);
-            } catch (FileNotFoundException ex) {
-                Logger.getLogger(Frame.class.getName()).log(Level.SEVERE, null, ex);
-            } catch (IOException ex) {
-                Logger.getLogger(Frame.class.getName()).log(Level.SEVERE, null, ex);
-            } catch (ParseException ex) {
-                Logger.getLogger(Frame.class.getName()).log(Level.SEVERE, null, ex);
-            }
-    }
-    else if(choice2.getSelectedIndex()==2){
-        indicator = 1;
-        BufferedImage myPicture = null;     
-            try {
-                myPicture = ImageIO.read(new File("image/rightarrow.png"));
-            } catch (IOException ex) {
-                Logger.getLogger(Frame.class.getName()).log(Level.SEVERE, null, ex);
-            }
-        jLabel2.setIcon(new ImageIcon(myPicture));
-                 
-        BufferedImage myPicture2 = null;
-            try {
-                myPicture2 = ImageIO.read(new File("image/leftarrow.png"));
-            } catch (IOException ex) {
-                Logger.getLogger(Frame.class.getName()).log(Level.SEVERE, null, ex);
-            }
-        jLabel3.setIcon(new ImageIcon(myPicture2));
-            try {
-                this.setNewgraph(currentDate);
-            } catch (FileNotFoundException ex) {
-                Logger.getLogger(Frame.class.getName()).log(Level.SEVERE, null, ex);
-            } catch (IOException ex) {
-                Logger.getLogger(Frame.class.getName()).log(Level.SEVERE, null, ex);
-            } catch (ParseException ex) {
-                Logger.getLogger(Frame.class.getName()).log(Level.SEVERE, null, ex);
-            }
-    }
+        try {
+            //Reload Button (To make a indicator change)
+                
+                
+               this.reload();
+               
+               
+        } catch (FileNotFoundException ex) {
+            Logger.getLogger(Frame.class.getName()).log(Level.SEVERE, null, ex);
+        } catch (IOException ex) {
+            Logger.getLogger(Frame.class.getName()).log(Level.SEVERE, null, ex);
+        } catch (ParseException ex) {
+            Logger.getLogger(Frame.class.getName()).log(Level.SEVERE, null, ex);
+        }
     
 }//GEN-LAST:event_jButton9ActionPerformed
 
