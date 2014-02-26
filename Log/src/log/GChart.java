@@ -40,8 +40,8 @@ public class GChart extends ApplicationFrame {
    //to set the margins
    CategoryAxis axis = plot.getDomainAxis();
    axis.setLowerMargin(0.03);
-   axis.setUpperMargin(0.13);
-   axis.setCategoryMargin(0.0);
+   axis.setUpperMargin(0.19);
+   axis.setCategoryMargin(0.0); //gap between bars
    BarRenderer renderer = (BarRenderer) plot.getRenderer();
    renderer.setItemMargin(0.0);
    axis.setTickLabelFont(new Font("",Font.BOLD, 10));

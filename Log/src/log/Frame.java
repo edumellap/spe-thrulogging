@@ -9,6 +9,7 @@
  * Created on 31-Jan-2014, 09:46:58
  */
 package log;
+
 import com.mongodb.MongoClient;
 import java.awt.Color;
 import java.awt.Font;
@@ -34,6 +35,7 @@ import org.jfree.chart.axis.CategoryAnchor;
 import org.jfree.chart.plot.CategoryPlot;
 import org.jfree.ui.RefineryUtilities;
 import org.jfree.ui.TextAnchor;
+import javax.swing.JLayeredPane;
 /**
  *
  * @author striker
@@ -81,9 +83,11 @@ public class Frame extends javax.swing.JFrame {
         choice2.insert("MB/Minutes", 2);
         
         
+        
         if(this.indicator>0 && this.indicator<7){
                  BufferedImage myPicture = ImageIO.read(new File("image/rightarrow.png"));     
                  jLabel2.setIcon(new ImageIcon(myPicture));
+                 
                  
                  BufferedImage myPicture2 = ImageIO.read(new File("image/leftarrow.png"));
                  jLabel3.setIcon(new ImageIcon(myPicture2));                                
@@ -91,7 +95,7 @@ public class Frame extends javax.swing.JFrame {
     }
     
     //when the app is running a new chart is deployed with this method, where "date" is the new chart's date
-    private void setNewgraph(String date) throws FileNotFoundException, IOException, ParseException{ 
+    public void setNewgraph(String date) throws FileNotFoundException, IOException, ParseException{ 
         
         
         List<String> finalresult = new ArrayList<String>(); 
@@ -112,7 +116,7 @@ public class Frame extends javax.swing.JFrame {
     //same method as before but this time the data of 2 days is deployed in the same chart
     //this method is activated when the "merge" button is pressed
     //the variable data indicates the current day shown in the panel, and the variable "date2" indicates the new day data to be shown
-    private void setNewgraph(String date, String date2) throws FileNotFoundException, IOException, ParseException{
+    public void setNewgraph(String date, String date2) throws FileNotFoundException, IOException, ParseException{
         
         List<String> finalresult = new ArrayList<String>();
         List<String> finalresult2 = new ArrayList<String>();
@@ -198,6 +202,7 @@ public class Frame extends javax.swing.JFrame {
      choice1.insert("Observation", 0);
      for(int i = 1; i<obs.size()+1;i++){
          choice1.insert(obs.get(i-1), i);
+         
      }
   
     
@@ -393,13 +398,13 @@ public class Frame extends javax.swing.JFrame {
         double div = 0;
         
         if(indicator==0 ){
-          div = 7.0;
-          T = i.substring(11, 13);
+          div = 9.8;
+          T = i.substring(1, 3);
           index = Integer.parseInt(T);
-          ihour = Integer.parseInt(i.substring(11, 13)); //initial hour
-          ehour = Integer.parseInt(e.substring(11, 13)); //ended hour
-          imin = Integer.parseInt(i.substring(14, 16)); //initial minute
-          emin = Integer.parseInt(e.substring(14, 16)); //ended minute
+          ihour = Integer.parseInt(i.substring(1, 3)); //initial hour
+          ehour = Integer.parseInt(e.substring(1, 3)); //ended hour
+          imin = Integer.parseInt(i.substring(4, 6)); //initial minute
+          emin = Integer.parseInt(e.substring(4, 6)); //ended minute
         
           start = imin/5; //to position the started point in the chart
                    
@@ -408,16 +413,16 @@ public class Frame extends javax.swing.JFrame {
         }
         
         else if(indicator>0 && indicator<7){
-          div = 5.8;
-          T = i.substring(11, 13)+i.substring(14, 15);
+          div = 8.2;
+          T = i.substring(1, 3)+i.substring(4, 5);
           int t = Integer.parseInt(T);
           index = this.map(t);
-          T = i.substring(11, 15);
+          T = i.substring(1, 5);
           
-          ihour = map(Integer.parseInt(i.substring(11, 13)+i.substring(14, 15))); //initial hour
-          ehour = map(Integer.parseInt(e.substring(11, 13)+e.substring(14, 15))); //ended hour
-          imin = Integer.parseInt(i.substring(15, 16)); //initial minute
-          emin = Integer.parseInt(e.substring(15, 16)); //ended minute
+          ihour = map(Integer.parseInt(i.substring(1, 3)+i.substring(4, 5))); //initial hour
+          ehour = map(Integer.parseInt(e.substring(1, 3)+e.substring(4, 5))); //ended hour
+          imin = Integer.parseInt(i.substring(5, 6)); //initial minute
+          emin = Integer.parseInt(e.substring(5, 6)); //ended minute
         
           start = (int)(imin/0.833333); //to position the started point in the chart
                    
@@ -436,7 +441,7 @@ public class Frame extends javax.swing.JFrame {
         String uid = arrow;
         String obs = arrow;
         
-        double x = (duration-1)/div;  // 1 line are 5.7*2 minutes, so if the chart's size changes, this number can be adjusted
+        double x = (duration-1)/div;  //  if the chart's size changes, this number can be adjusted
         x = (int) x;
         String gap="";
         
@@ -444,7 +449,7 @@ public class Frame extends javax.swing.JFrame {
             if(x%2 == 0){
                 gap = arrow+"\u2501";
                 arrow = arrow+" ";
-                
+                             
             }
             else if(x%2 != 0){
                 x = x+1;
@@ -457,7 +462,15 @@ public class Frame extends javax.swing.JFrame {
             }
             
         }
-        
+        if(duration>240){
+            int aux = (duration - 240)/50;
+            if(aux==0){
+                arrow=arrow+"\u2501";
+            }
+            for(int m=0;m<aux;m++){
+                arrow=arrow+"\u2501";
+            }
+        }
         
         arrow = arrow+"\u2501\u25BA";
         
@@ -467,9 +480,15 @@ public class Frame extends javax.swing.JFrame {
         
          int counter = 0;
          int row = 0;
+         int arrowLenght = arrow.trim().length();
+         int uidLenght = uid.trim().length();
+         int obsLenght = obs.trim().length();
+         
+         int lenght = this.getBigger(arrowLenght, uidLenght, obsLenght);
+         lenght = lenght/3; //the lenght of the largest string (in bars)
          
          for(int r=row;r<10;r++){
-             for(int k = index;k<index+7&&k<24;k++){
+             for(int k = index;k<index+lenght&&k<24;k++){
                  counter = counter + arrows[r][k]; //should be 0 if it's all clear, gt 0 otherwise
                
              }
@@ -488,12 +507,13 @@ public class Frame extends javax.swing.JFrame {
          int jump = (int) (plot.getRangeAxis(0).getUpperBound())/10;
          int position = jump/5;
           
-          
+         
           
          final CategoryTextAnnotation ca = new CategoryTextAnnotation(arrow,T,position+(jump*row));
-         ca.setFont(new Font("f", Font.PLAIN, 10));
+         ca.setFont(new Font("f", Font.BOLD, 10));
          ca.setTextAnchor(TextAnchor.CENTER_LEFT);
-         ca.setCategoryAnchor(CategoryAnchor.START); 
+         ca.setCategoryAnchor(CategoryAnchor.START);
+        
          
          final CategoryTextAnnotation ca2 = new CategoryTextAnnotation(gap,T,position+(jump*row));
          ca2.setFont(new Font("f", Font.PLAIN, 10));
@@ -501,13 +521,13 @@ public class Frame extends javax.swing.JFrame {
          ca2.setCategoryAnchor(CategoryAnchor.START); 
          
          final CategoryTextAnnotation ca3 = new CategoryTextAnnotation(uid,T,(position+(jump*row))+(jump/3.1));
-         ca3.setFont(new Font("f", Font.PLAIN, 12));
+         ca3.setFont(new Font("f", Font.BOLD, 12));
          ca3.setTextAnchor(TextAnchor.CENTER_LEFT);
          ca3.setCategoryAnchor(CategoryAnchor.START);
          
          
          final CategoryTextAnnotation ca4 = new CategoryTextAnnotation(obs,T,(position+(jump*row))+(jump/1.5));
-         ca4.setFont(new Font("f", Font.PLAIN, 12));
+         ca4.setFont(new Font("f", Font.BOLD, 12));
          ca4.setTextAnchor(TextAnchor.CENTER_LEFT);
          ca4.setCategoryAnchor(CategoryAnchor.START);
          
@@ -516,25 +536,34 @@ public class Frame extends javax.swing.JFrame {
          plot.addAnnotation(ca3);
          plot.addAnnotation(ca4);
          
-       if(index<18){    
-        arrows[row][index]=1;
-        arrows[row][index+1]=1;
-        arrows[row][index+2]=1;
-        arrows[row][index+3]=1;
-        arrows[row][index+4]=1;
-        arrows[row][index+5]=1;
-        arrows[row][index+6]=1;
-       }
-       else{
-           
-           for(int w=index;w<24;w++){
+         
+       
+
+           for(int w=index;w<index+lenght&&w<24;w++){
                arrows[row][w]=1;
            }
-       }
+       
        jPanel1.repaint();
     }
     
-    
+    private int getBigger(int a, int b, int c){
+        if(a>=b){
+            if(a>=c){
+                return a;
+            }
+            else{
+                return c;
+            }
+        }
+        else{
+            if(b>=c){
+                return b;
+            }
+            else{
+                return c;
+            }
+        }
+    }
     private List<String> getObservation(String date) throws FileNotFoundException, IOException{
         
      List<String> finalresult2 = new ArrayList<String>();
@@ -927,7 +956,7 @@ private void jButton4ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRS
                  String uid = lines[2];
                  String ob = lines[3];
               
-                 setArrow(start, end, uid, ob); 
+                 this.setArrow(start, end, uid, ob); 
         }
       
 }//GEN-LAST:event_jButton4ActionPerformed

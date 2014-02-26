@@ -182,7 +182,7 @@ public class LogExtractor {
 
                 Collections.sort(result);
               
-                List<String> finaldata = this.parseData(result, date, indicator);
+                List<String> finaldata = this.addMissingTime(result, date, indicator);
                
      
             
@@ -418,7 +418,7 @@ if(hits4>0){
                         for(int i=0;i<finalresult2.size();i++){
                                line = finalresult2.get(i);
                                line2 = line.split(" ");
-                               END = line2[0]+" "+line2[5].replace("'", "").replace(",", "");
+                               END = line2[0]+" "+line2[5].replace("'", "").replace(",", "")+" "+line2[10];
                                finTime.add(END);                        
                         }
                         //END
@@ -443,7 +443,7 @@ if(hits4>0){
                for (int j = 0; j < finTime.size(); j++) {
                     end = finTime.get(j).split(" ");
                     if(start[1].equals(end[1])){
-                          last = start[0]+" "+end[0]+" "+start[1]+" "+start[2];
+                          last = start[0].substring(10, 19) +" "+end[0].substring(10, 19) +" "+start[1]+" "+start[2]+" "+end[2];
                           obs.add(last);
                     }
               } 
@@ -455,7 +455,7 @@ if(hits4>0){
         
         return obs;
     }
-    private List<String> parseData( List<String> result, String date, int indicator){
+    private List<String> addMissingTime( List<String> result, String date, int indicator){
         
          String[] hour = null;
                 
