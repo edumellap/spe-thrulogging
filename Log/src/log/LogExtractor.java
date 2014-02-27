@@ -32,8 +32,8 @@ import org.elasticsearch.index.query.QueryBuilders;
  */
 public class LogExtractor {
            
-      private String prefix = "_source"; //this prefix varies depending of the DB tha app connect to. With a newer version
-                                        //of alogging2mq this should be "_source", and  with an odler version "@field"
+      private String prefix = "@fields"; //this prefix varies depending of the DB tha app connect to. With a newer version
+                                        //of alogging2mq this should be "_source", and  with an odler version "@fields"
     
     public List<String> getDataStored(String date, Client esClient, MongoClient mongoClient, int indicator) throws FileNotFoundException, IOException{
             
